@@ -6,6 +6,7 @@ the real platform.
 """
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -58,3 +59,53 @@ app.include_router(auth_router)
 app.include_router(eod_router)
 app.include_router(iod_router)
 app.include_router(lab_router)
+
+# The Lumen-style error envelope actually returned by the exception handlers
+_API_ERROR_SCHEMA = {
+    "title": "APIError",
+    "type": "object",
+    "properties": {
+        "code": {"type": "integer", "example": 400},
+        "message": {"type": "string", "example": "Bad Request"},
+        "errors": {
+            "type": "array",
+            "description": "Present on request-validation failures",
+            "items": {
+                "type": "object",
+                "properties": {"field": {"type": "string"}, "message": {"type": "string"}},
+            },
+        },
+    },
+}
+
+
+def _lumen_openapi():
+    """Replace FastAPI's advertised 422 with the 400 the API actually returns.
+
+    The RequestValidationError handler above converts every validation failure
+    to a Lumen-style 400 at runtime; schema generation doesn't know about
+    exception handlers, so without this the docs would promise a 422 shape
+    that no request can ever receive.
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = get_openapi(title=app.title, version=app.version,
+                         description=app.description, routes=app.routes)
+    schema.setdefault("components", {}).setdefault("schemas", {})["APIError"] = _API_ERROR_SCHEMA
+    error_response = {
+        "description": "Bad Request",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}},
+    }
+    for path_item in schema["paths"].values():
+        for operation in path_item.values():
+            responses = operation.get("responses", {})
+            if "422" in responses:
+                del responses["422"]
+                responses["400"] = error_response
+    schema["components"]["schemas"].pop("HTTPValidationError", None)
+    schema["components"]["schemas"].pop("ValidationError", None)
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = _lumen_openapi
