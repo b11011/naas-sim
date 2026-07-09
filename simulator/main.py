@@ -10,10 +10,13 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from . import config
 from .auth import router as auth_router
 from .ethernet_on_demand import router as eod_router
 from .internet_on_demand import router as iod_router
 from .lab import router as lab_router
+from .metrics import metrics
+from .state import store
 
 app = FastAPI(
     title="Lumen NaaS Simulator",
@@ -28,8 +31,26 @@ app = FastAPI(
 )
 
 
+def _route_template(request: Request) -> str:
+    route = request.scope.get("route")
+    return getattr(route, "path", request.url.path)
+
+
+@app.middleware("http")
+async def observe_and_persist(request: Request, call_next):
+    response = await call_next(request)
+    path = _route_template(request)
+    if not path.startswith("/_lab"):
+        metrics.record_request(request.method, path, response.status_code)
+    # Persist after successful mutations (opt-in via NAAS_SIM_STATE_FILE)
+    if config.STATE_FILE and request.method in ("POST", "PATCH", "DELETE") and response.status_code < 400:
+        store.save()
+    return response
+
+
 @app.exception_handler(StarletteHTTPException)
 async def lumen_style_http_error(request: Request, exc: StarletteHTTPException):
+    metrics.record_error(exc.status_code, _route_template(request), str(exc.detail))
     return JSONResponse(status_code=exc.status_code,
                         content={"code": exc.status_code, "message": str(exc.detail)})
 
@@ -38,8 +59,20 @@ async def lumen_style_http_error(request: Request, exc: StarletteHTTPException):
 async def lumen_style_validation_error(request: Request, exc: RequestValidationError):
     errors = [{"field": ".".join(str(part) for part in e["loc"]), "message": e["msg"]}
               for e in exc.errors()]
+    summary = "; ".join(f"{e['field']}: {e['message']}" for e in errors)
+    metrics.record_error(400, _route_template(request), f"validation — {summary}")
     return JSONResponse(status_code=400,
                         content={"code": 400, "message": "Bad Request", "errors": errors})
+
+
+@app.on_event("startup")
+async def load_seed_profile():
+    """NAAS_SIM_SEED_FILE: catalog profile applied at startup — unless a
+    persisted snapshot was restored (running state wins over seeds)."""
+    if config.SEED_FILE and not store.loaded_from_snapshot:
+        import json
+        with open(config.SEED_FILE) as f:
+            store.apply_seed(json.load(f))
 
 
 @app.get("/", tags=["Info"])

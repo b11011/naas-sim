@@ -35,6 +35,7 @@ def schedule(delay_seconds: float, fn):
         try:
             await asyncio.sleep(delay_seconds)
             fn()
+            store.save()
         except Exception:
             log.exception("scheduled transition failed")
 

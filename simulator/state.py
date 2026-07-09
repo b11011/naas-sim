@@ -36,9 +36,13 @@ def price_for(speed_mbps: int) -> dict:
 class Store:
     def __init__(self):
         self.reset()
+        self.loaded_from_snapshot = self.load()
+        if self.loaded_from_snapshot:
+            self.finish_pending()
 
     def reset(self):
         self.tokens = {}            # access token -> expiry (epoch seconds)
+        self.speeds = list(SPEEDS_MBPS)  # offered speeds; seedable per catalog
 
         # Ethernet On-Demand
         self.unis = {}              # uniId -> UNI
@@ -68,6 +72,118 @@ class Store:
 
     def uni_by_service_id(self, uni_service_id):
         return next((u for u in self.unis.values() if u["uniServiceId"] == uni_service_id), None)
+
+    # ---------------------------------------------------------- persistence
+
+    _PERSISTED = ["speeds", "unis", "evcs", "ha_evcs", "evc_requests", "ha_evc_requests",
+                  "partner_interconnects", "locations", "services", "quotes", "orders",
+                  "webhooks", "events"]
+
+    def save(self):
+        """Snapshot state to config.STATE_FILE (no-op when unset). Tokens are
+        deliberately ephemeral — clients re-authenticate after a restart."""
+        from . import config
+        if not config.STATE_FILE:
+            return
+        import json
+        import os
+        data = {key: getattr(self, key) for key in self._PERSISTED}
+        data["order_counts"] = [[cust, day, n] for (cust, day), n in self.order_counts.items()]
+        data["_quote_seq"] = self._quote_seq
+        tmp = config.STATE_FILE + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(data, f)
+        os.replace(tmp, config.STATE_FILE)
+
+    def load(self) -> bool:
+        """Restore a snapshot if one exists. Returns True when state was loaded."""
+        from . import config
+        if not config.STATE_FILE:
+            return False
+        import json
+        import os
+        if not os.path.exists(config.STATE_FILE):
+            return False
+        with open(config.STATE_FILE) as f:
+            data = json.load(f)
+        for key in self._PERSISTED:
+            if key in data:
+                setattr(self, key, data[key])
+        self.order_counts = {(cust, day): n for cust, day, n in data.get("order_counts", [])}
+        self._quote_seq = data.get("_quote_seq", self._quote_seq)
+        self.tokens = {}
+        return True
+
+    def finish_pending(self):
+        """Reconcile-on-startup: complete transitions that were in flight when
+        the process stopped, so no circuit/order is stuck transitional forever."""
+        for req in self.evc_requests.values():
+            if req["status"] != "IN_PROGRESS":
+                continue
+            evc = self.evcs.get(req["evcId"])
+            if req["action"] == "DELETE":
+                self.evcs.pop(req["evcId"], None)
+            elif evc is not None:
+                if req["action"] == "MODIFY" and req.get("requestedBandwidth"):
+                    evc["bandwidth"] = req["requestedBandwidth"]
+                    evc["modifyDateTime"] = now_iso()
+                evc["status"] = "ACTIVE"
+            req["status"], req["completedDateTime"] = "COMPLETED", now_iso()
+        for req in self.ha_evc_requests.values():
+            if req["status"] != "IN_PROGRESS":
+                continue
+            ha = self.ha_evcs.get(req["haEvcId"])
+            if req["action"] == "DELETE" and ha is not None:
+                for evc_id in ha.get("evcIds", []):
+                    self.evcs.pop(evc_id, None)
+                self.ha_evcs.pop(req["haEvcId"], None)
+            elif ha is not None:
+                if req["action"] == "MODIFY" and req.get("requestedBandwidth"):
+                    ha["bandwidth"] = req["requestedBandwidth"]
+                ha["status"] = "ACTIVE"
+                for evc_id in ha.get("evcIds", []):
+                    if evc_id in self.evcs:
+                        if req["action"] == "MODIFY" and req.get("requestedBandwidth"):
+                            self.evcs[evc_id]["bandwidth"] = req["requestedBandwidth"]
+                        self.evcs[evc_id]["status"] = "ACTIVE"
+            req["status"], req["completedDateTime"] = "COMPLETED", now_iso()
+        for order in self.orders.values():
+            if order["state"] != "acknowledged":
+                continue
+            service = self.services.get(order.get("serviceId") or "")
+            if order["action"] == "delete":
+                self.services.pop(order.get("serviceId"), None)
+            elif service is not None:
+                if order["action"] == "modify" and order.get("requestedBandwidth"):
+                    service["bandwidth"] = order["requestedBandwidth"]
+                    service["modifiedDateTime"] = now_iso()
+                service["status"] = "active"
+            order["state"], order["completionDate"] = "completed", now_iso()
+        self.save()
+
+    # ---------------------------------------------------------- seeding
+
+    def apply_seed(self, profile: dict):
+        """Load a catalog profile (any subset of: speeds, locations, unis, evcs,
+        services, partnerInterconnects). Replaces the provided sections and
+        clears transactional state (quotes, orders, requests, events)."""
+        if "speeds" in profile:
+            self.speeds = sorted(int(s) for s in profile["speeds"])
+        if "locations" in profile:
+            self.locations = profile["locations"]
+        if "partnerInterconnects" in profile:
+            self.partner_interconnects = profile["partnerInterconnects"]
+        if "unis" in profile:
+            self.unis = {u["uniId"]: u for u in profile["unis"]}
+        if "evcs" in profile:
+            self.evcs = {e["evcId"]: e for e in profile["evcs"]}
+        if "services" in profile:
+            self.services = {s["id"]: s for s in profile["services"]}
+        self.ha_evcs = {}
+        self.evc_requests, self.ha_evc_requests = {}, {}
+        self.quotes, self.orders, self.order_counts = {}, {}, {}
+        self.events = []
+        self.save()
 
     def _seed(self):
         for uni in [

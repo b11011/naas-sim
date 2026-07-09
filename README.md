@@ -32,6 +32,12 @@ The simulator also works standalone — Swagger UI at `/docs`, OAuth2 client-cre
 ## 60-second quickstart
 
 ```bash
+docker run -p 8080:8080 ghcr.io/b11011/naas-sim    # Swagger UI at localhost:8080/docs
+```
+
+Or from source:
+
+```bash
 git clone https://github.com/b11011/naas-sim && cd naas-sim
 python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 NAAS_SIM_DELAY_SECONDS=3 python -m simulator &     # http://localhost:8080/docs
@@ -70,6 +76,7 @@ Seed data reuses the identifiers from Lumen's own documentation examples, so req
 - **NetBox stays a source of truth, not an orchestrator.** Execution lives in a thin reconciler; NetBox holds desired state (`commit_rate`) and receives confirmations (custom field + journal). Event-rule webhooks carry pre/post-change snapshots — the middleware uses them both to filter no-op edits and to break the write-back loop.
 - **Failure honesty.** An impossible request (bandwidth over UNI capacity, expired quote, quota hit) leaves NetBox showing desired ≠ actual with a red journal entry — surfaced drift, not silent rollback.
 - **Everything configurable via env** (transition delay, quote TTL, quota, creds — see [`.env.example`](.env.example)); tests run the full lifecycle at a 0.2 s delay.
+- **Product layer**: usage metrics with error-type frequencies (`GET /_lab/metrics` — which mistakes do integrators actually make?), opt-in state persistence with restart reconciliation (`NAAS_SIM_STATE_FILE`), and a seedable catalog (`POST /_lab/seed`) so the whole environment can be loaded with a real product catalog — see [CHANGELOG](CHANGELOG.md).
 
 ## Repo layout
 

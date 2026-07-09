@@ -5,6 +5,11 @@ pushes the bandwidth change to the NaaS simulator (EOD PATCH or IOD
 quote→order by circuit type slug), then closes the loop on the simulator's
 completion webhook by updating naas_status and journaling in NetBox.
 
+On startup it also runs a reconciliation sweep: every NaaS-managed circuit's
+commit_rate is compared against actual simulator state, converging any drift
+and unsticking stale transitional statuses — so missed webhooks (e.g. from a
+simulator restart) can never wedge the system permanently.
+
 Config (env): NAAS_BASE_URL, NETBOX_URL, NETBOX_TOKEN (or token file at
 ~/.config/naas-sim-netbox-token), SELF_URL.
 """
@@ -49,36 +54,9 @@ def nb_headers() -> dict:
     return {"Authorization": f"{scheme} {NETBOX_TOKEN}", "Content-Type": "application/json"}
 
 
-@app.on_event("startup")
-def register_sim_webhook():
-    """Subscribe to the sim's completion events (idempotent across restarts)."""
-    auth = naas_token()
-    hooks = httpx.get(f"{NAAS}/Customer/v3/Ordering/notifications", headers=auth).json()["webhooks"]
-    if not any(h["callback"] == f"{SELF_URL}/naas-events" for h in hooks):
-        httpx.post(f"{NAAS}/Customer/v3/Ordering/notifications", headers=auth,
-                   json={"callback": f"{SELF_URL}/naas-events"})
-        log.info("registered sim webhook -> %s/naas-events", SELF_URL)
-
-
-# ---------- inbound from NetBox -----------------------------------------
-@app.post("/netbox-hook")
-async def netbox_hook(request: Request):
-    payload = await request.json()
-    snap = payload.get("snapshots") or {}
-    pre, post = snap.get("prechange") or {}, snap.get("postchange") or {}
-    data = payload.get("data", {})
-
-    # Only act when commit_rate actually changed (also breaks the loop:
-    # our own naas_status writeback fires this hook again, but rate is equal then)
-    if pre.get("commit_rate") == post.get("commit_rate"):
-        return {"action": "ignored", "reason": "commit_rate unchanged"}
-
-    cid = data["cid"]
-    mbps = int(post["commit_rate"]) // 1000
-    slug = (data.get("type") or {}).get("slug", "")
-    cf = data.get("custom_fields") or {}
-    log.info("circuit %s: commit_rate -> %s Mbps (%s)", cid, mbps, slug)
-
+# ---------- core: submit one bandwidth intent to the NaaS API -------------
+def submit_change(circuit_id: int, cid: str, slug: str, cf: dict, mbps: int, source: str) -> dict:
+    """Push one bandwidth change to the sim. Returns an action-report dict."""
     auth = naas_token()
     try:
         if slug == "eod-evc":
@@ -108,13 +86,114 @@ async def netbox_hook(request: Request):
         else:
             return {"action": "ignored", "reason": f"type {slug} not NaaS-managed"}
     except httpx.HTTPStatusError as exc:
-        journal(data["id"], f"NaaS change to {mbps} Mbps REJECTED: {exc.response.text}", kind="danger")
-        set_status(data["id"], "FAILED")
+        journal(circuit_id, f"NaaS change to {mbps} Mbps REJECTED ({source}): {exc.response.text}",
+                kind="danger")
+        set_status(circuit_id, "FAILED")
         return {"action": "failed", "detail": exc.response.text}
 
-    pending[ref] = {"circuit_id": data["id"], "cid": cid, "mbps": mbps}
-    set_status(data["id"], "MODIFYING")
+    pending[ref] = {"circuit_id": circuit_id, "cid": cid, "mbps": mbps}
+    set_status(circuit_id, "MODIFYING")
     return {"action": "submitted", "ref": ref}
+
+
+# ---------- actual simulator state for one circuit -------------------------
+def naas_actual_mbps(cid: str, slug: str) -> int | None:
+    auth = naas_token()
+    try:
+        if slug == "eod-evc":
+            r = httpx.get(f"{NAAS}/Network/v5/DynamicConnection/evcs/{cid}",
+                          headers={**auth, "x-billing-account-number": "5-WX3EDQ"}, timeout=10)
+            r.raise_for_status()
+            return int(r.json()["bandwidth"])
+        if slug == "iod-dia":
+            r = httpx.get(f"{NAAS}/ProductInventory/v1/inventory", params={"id": cid},
+                          headers={**auth, "x-customer-number": "1-ABCDE"}, timeout=10)
+            r.raise_for_status()
+            services = r.json()["services"]
+            return int(services[0]["bandwidth"]) if services else None
+    except httpx.HTTPError:
+        return None
+    return None
+
+
+# ---------- startup: register webhook + reconcile drift --------------------
+@app.on_event("startup")
+def startup():
+    try:
+        register_sim_webhook()
+    except Exception as exc:
+        log.warning("sim webhook registration failed (will rely on reconcile): %s", exc)
+    try:
+        reconcile_all("startup sweep")
+    except Exception as exc:
+        log.warning("startup reconcile failed: %s", exc)
+
+
+def register_sim_webhook():
+    """Subscribe to the sim's completion events (idempotent across restarts)."""
+    auth = naas_token()
+    hooks = httpx.get(f"{NAAS}/Customer/v3/Ordering/notifications", headers=auth,
+                      timeout=10).json()["webhooks"]
+    if not any(h["callback"] == f"{SELF_URL}/naas-events" for h in hooks):
+        httpx.post(f"{NAAS}/Customer/v3/Ordering/notifications", headers=auth,
+                   json={"callback": f"{SELF_URL}/naas-events"}, timeout=10)
+        log.info("registered sim webhook -> %s/naas-events", SELF_URL)
+
+
+def reconcile_all(source: str):
+    """Compare every NaaS-managed circuit's desired rate (NetBox commit_rate)
+    against actual simulator state; converge drift, unstick stale statuses."""
+    r = httpx.get(f"{NETBOX}/api/circuits/circuits/?limit=500", headers=nb_headers(), timeout=15)
+    r.raise_for_status()
+    for c in r.json()["results"]:
+        slug = (c.get("type") or {}).get("slug", "")
+        if slug not in ("eod-evc", "iod-dia") or not c.get("commit_rate"):
+            continue
+        desired = int(c["commit_rate"]) // 1000
+        actual = naas_actual_mbps(c["cid"], slug)
+        status = (c.get("custom_fields") or {}).get("naas_status")
+        if actual is None:
+            log.warning("reconcile: %s not found in sim — skipping", c["cid"])
+            continue
+        if actual != desired:
+            log.info("reconcile: %s drift (desired %s, actual %s) — converging",
+                     c["cid"], desired, actual)
+            journal(c["id"], f"Reconcile ({source}): drift detected — desired {desired} Mbps, "
+                             f"actual {actual} Mbps. Converging.", kind="warning")
+            submit_change(c["id"], c["cid"], slug, c.get("custom_fields") or {}, desired, source)
+        elif status != "ACTIVE":
+            log.info("reconcile: %s in sync but status=%s — correcting", c["cid"], status)
+            set_status(c["id"], "ACTIVE")
+            journal(c["id"], f"Reconcile ({source}): state in sync at {desired} Mbps; "
+                             f"stale status '{status}' corrected to ACTIVE.")
+
+
+# ---------- inbound from NetBox -----------------------------------------
+@app.post("/netbox-hook")
+async def netbox_hook(request: Request):
+    payload = await request.json()
+    snap = payload.get("snapshots") or {}
+    pre, post = snap.get("prechange") or {}, snap.get("postchange") or {}
+    data = payload.get("data", {})
+
+    # Only act when commit_rate actually changed (also breaks the loop:
+    # our own naas_status writeback fires this hook again, but rate is equal then)
+    if pre.get("commit_rate") == post.get("commit_rate"):
+        return {"action": "ignored", "reason": "commit_rate unchanged"}
+
+    cid = data["cid"]
+    mbps = int(post["commit_rate"]) // 1000
+    slug = (data.get("type") or {}).get("slug", "")
+    cf = data.get("custom_fields") or {}
+    log.info("circuit %s: commit_rate -> %s Mbps (%s)", cid, mbps, slug)
+    return submit_change(data["id"], cid, slug, cf, mbps, "netbox webhook")
+
+
+# ---------- manual reconcile trigger --------------------------------------
+@app.post("/reconcile")
+async def reconcile_endpoint():
+    reconcile_all("manual trigger")
+    return {"action": "reconciled"}
 
 
 # ---------- inbound from the simulator -----------------------------------

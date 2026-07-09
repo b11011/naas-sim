@@ -17,7 +17,7 @@ from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query
 from . import config
 from .auth import require_token
 from .events import emit, schedule
-from .state import SPEEDS_MBPS, gmt_date, new_id, now_iso, price_for, store
+from .state import gmt_date, new_id, now_iso, price_for, store
 
 router = APIRouter(dependencies=[Depends(require_token)], tags=["Internet On-Demand"])
 
@@ -41,8 +41,8 @@ def _parse_speed(speed: str) -> int:
         value = int(str(speed).lower().replace("mbps", "").strip())
     except ValueError:
         raise HTTPException(400, f'invalid speed "{speed}"; expected e.g. "100 Mbps"')
-    if value not in SPEEDS_MBPS:
-        raise HTTPException(400, f"speed {value} Mbps not offered; available: {SPEEDS_MBPS}")
+    if value not in store.speeds:
+        raise HTTPException(400, f"speed {value} Mbps not offered; available: {store.speeds}")
     return value
 
 
@@ -80,7 +80,7 @@ async def get_price(productCode: str = Query(...), masterSiteId: str = Query(...
         "naasEnabled": location["naasEnabled"],
         "offerings": [
             {"speed": s, "displayValue": f"{s} Mbps", "unit": "Mbps", "price": price_for(s)}
-            for s in SPEEDS_MBPS
+            for s in store.speeds
         ],
     }
 

@@ -51,11 +51,15 @@ All settings are environment variables read at startup:
 | `NAAS_SIM_QUOTE_TTL_SECONDS` | `900` | Internet On-Demand quote validity (real: 15 min) |
 | `NAAS_SIM_DAILY_ORDER_LIMIT` | `24` | Order quota per customer per GMT day (real: 24) |
 | `NAAS_SIM_TOKEN_TTL_SECONDS` | `3600` | Access-token lifetime |
+| `NAAS_SIM_STATE_FILE` | *(unset)* | Opt-in persistence: JSON snapshot path. On restart, in-flight transitions are completed (nothing sticks in `MODIFYING`). Tokens stay ephemeral. |
+| `NAAS_SIM_SEED_FILE` | *(unset)* | Catalog profile loaded at startup (ignored if a snapshot was restored) — see `examples/seed-profile.json` |
 
 Example: `NAAS_SIM_DELAY_SECONDS=2 python -m simulator`
 
-State is **in-memory**: restarting the process (or calling `POST /_lab/reset`)
-returns everything to the seed data below.
+State is **in-memory by default**: restarting the process (or calling
+`POST /_lab/reset`) returns everything to the seed data below. Set
+`NAAS_SIM_STATE_FILE` to persist across restarts — in-flight transitions are
+completed on load, so nothing sticks in `MODIFYING`.
 
 ### Seed data
 
@@ -303,6 +307,8 @@ Unauthenticated helpers under `/_lab` — **not** part of the Lumen surface:
 | `GET /_lab/state` | Full dump: UNIs, EVCs, services, quotes, orders, quota counters, webhooks |
 | `GET /_lab/events` | Every emitted event |
 | `POST /_lab/reset` | Restore seed data (wipes tokens too — re-authenticate after) |
+| `GET /_lab/metrics` | Usage metrics: request counts by route/status + top error types (`POST /_lab/metrics/reset` to zero; not persisted) |
+| `POST /_lab/seed` | Load a catalog profile (any subset of `speeds`, `locations`, `unis`, `evcs`, `services`, `partnerInterconnects`); clears transactional state |
 
 ---
 

@@ -1,0 +1,39 @@
+{
+  "speeds": [10, 50, 100, 500, 1000, 2000, 5000, 10000],
+  "locations": [
+    {"masterSiteId": "PL0000000101", "name": "Example DC Chicago", "address": "350 E Cermak Rd, Chicago, IL",
+     "partnerId": "51001", "partner": "Equinix", "naasEnabled": true},
+    {"masterSiteId": "PL0000000102", "name": "Example DC Phoenix", "address": "3402 E University Dr, Phoenix, AZ",
+     "partnerId": "51002", "partner": "Lumen", "naasEnabled": true}
+  ],
+  "partnerInterconnects": {
+    "aws-hosted-connection": [
+      {"location": "Chicago, IL", "interconnectId": "dxcon-example01", "region": "us-east-2",
+       "availableSpeeds": [50, 100, 500, 1000, 2000, 5000]}
+    ]
+  },
+  "unis": [
+    {"uniId": "22222222-bbbb-4ccc-8ddd-000000000001", "uniServiceId": "IL/CHI1/900001/LVLC",
+     "uniName": "CHI-cust-port-1", "status": "ACTIVE", "location": "Example DC Chicago",
+     "portSpeed": 10000, "maxAvailableBandwidth": 10000}
+  ],
+  "evcs": [
+    {"evcId": "11111111-2222-4333-8444-000000000001", "evcName": "chicago-aws-primary",
+     "evcServiceAlias": "VLXX/D00901/LVLC", "status": "ACTIVE", "haEvcId": null,
+     "bandwidth": 500, "billingType": "monthly", "cos": "enhanced", "userEmail": "netops@example.com",
+     "startDateTime": "2026-07-01T00:00:00Z", "modifyDateTime": null, "endDateTime": null,
+     "endPoint1": {"uniServiceId": "IL/CHI1/900001/LVLC", "ceVlan": 210},
+     "endPoint2": {"cloudProvider": "aws-hosted-connection", "region": "us-east-2",
+                   "interconnectId": "dxcon-example01"},
+     "billingAccountNumber": "5-EXAMPLE"}
+  ],
+  "services": [
+    {"id": "779000001", "name": "Chicago DIA primary", "status": "active",
+     "customerNumber": "1-EXMPL", "billingAccountId": "5-EXAMPLE",
+     "productOffering": {"id": "718", "name": "Internet On-Demand"},
+     "productSpecification": {"id": "5001", "name": "NaaS Internet"},
+     "masterSiteId": "PL0000000101", "mUniServiceId": "IL/CHI1/900001/LVLC",
+     "bandwidth": 1000, "bandwidthUnit": "Mbps", "ipv4Prefix": "198.51.100.0/29",
+     "createdDateTime": "2026-07-01T00:00:00Z", "modifiedDateTime": null}
+  ]
+}

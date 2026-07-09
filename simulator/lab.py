@@ -3,8 +3,9 @@
 These are unauthenticated on purpose so you can inspect and reset the
 simulator without a token while developing.
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Body, HTTPException
 
+from .metrics import metrics
 from .state import store
 
 router = APIRouter(prefix="/_lab", tags=["Lab controls"])
@@ -35,4 +36,34 @@ async def list_events():
 @router.post("/reset")
 async def reset():
     store.reset()
+    store.save()
     return {"status": "reset", "message": "simulator state restored to seed data"}
+
+
+@router.get("/metrics")
+async def get_metrics():
+    return metrics.snapshot()
+
+
+@router.post("/metrics/reset")
+async def reset_metrics():
+    metrics.reset()
+    return {"status": "reset"}
+
+
+@router.post("/seed")
+async def seed(profile: dict = Body(...)):
+    """Load a catalog profile: any subset of speeds, locations, unis, evcs,
+    services, partnerInterconnects. Replaces those sections; clears
+    transactional state (quotes, orders, requests, events)."""
+    allowed = {"speeds", "locations", "unis", "evcs", "services", "partnerInterconnects"}
+    unknown = set(profile) - allowed
+    if unknown:
+        raise HTTPException(400, f"unknown seed sections: {sorted(unknown)}; allowed: {sorted(allowed)}")
+    if not profile:
+        raise HTTPException(400, "empty profile; provide at least one section")
+    store.apply_seed(profile)
+    return {"status": "seeded", "sections": sorted(profile),
+            "counts": {"unis": len(store.unis), "evcs": len(store.evcs),
+                       "services": len(store.services), "locations": len(store.locations),
+                       "speeds": store.speeds}}

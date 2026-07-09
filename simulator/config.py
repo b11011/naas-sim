@@ -14,3 +14,9 @@ QUOTE_TTL_SECONDS = float(os.getenv("NAAS_SIM_QUOTE_TTL_SECONDS", str(15 * 60)))
 
 # Real platform quota: max 24 change requests per day (resets at GMT midnight).
 DAILY_ORDER_LIMIT = int(os.getenv("NAAS_SIM_DAILY_ORDER_LIMIT", "24"))
+
+# Opt-in persistence: path to a JSON snapshot file ("" disables, the default).
+STATE_FILE = os.getenv("NAAS_SIM_STATE_FILE", "")
+
+# Optional catalog profile loaded at startup when no saved state exists.
+SEED_FILE = os.getenv("NAAS_SIM_SEED_FILE", "")
