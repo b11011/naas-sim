@@ -56,6 +56,13 @@ All settings are environment variables read at startup:
 
 Example: `NAAS_SIM_DELAY_SECONDS=2 python -m simulator`
 
+**Where the variables come from** — anything that puts them in the process
+environment: inline on the command line (as above), `Environment=` lines in a
+systemd unit, or `-e` flags to `docker run`. Every variable has a default in
+`simulator/config.py`, so none are required. Note that **no `.env` file is
+auto-loaded** — `.env.example` is a reference template; to use a copy of it,
+pass it explicitly (`docker run --env-file .env …`) or export it in your shell.
+
 State is **in-memory by default**: restarting the process (or calling
 `POST /_lab/reset`) returns everything to the seed data below. Set
 `NAAS_SIM_STATE_FILE` to persist across restarts — in-flight transitions are
