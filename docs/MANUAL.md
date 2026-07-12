@@ -306,7 +306,7 @@ Unauthenticated helpers under `/_lab` — **not** part of the Lumen surface:
 |---|---|
 | `GET /_lab/state` | Full dump: UNIs, EVCs, services, quotes, orders, quota counters, webhooks |
 | `GET /_lab/events` | Every emitted event |
-| `POST /_lab/reset` | Restore seed data (wipes tokens too — re-authenticate after) |
+| `POST /_lab/reset` | Restore seed data (wipes tokens — re-authenticate after; **webhook registrations survive** since v0.1.1) |
 | `GET /_lab/metrics` | Usage metrics: request counts by route/status + top error types (`POST /_lab/metrics/reset` to zero; not persisted) |
 | `POST /_lab/seed` | Load a catalog profile (any subset of `speeds`, `locations`, `unis`, `evcs`, `services`, `partnerInterconnects`); clears transactional state |
 
