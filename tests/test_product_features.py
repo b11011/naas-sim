@@ -98,3 +98,16 @@ def test_persistence_roundtrip_completes_inflight(tmp_path, monkeypatch):
     assert s2.evc_requests["req-1"]["status"] == "COMPLETED"
     # tokens are ephemeral by design
     assert s2.tokens == {}
+
+
+def test_reset_preserves_webhook_registrations(client):
+    token = get_token(client)
+    client.post("/Customer/v3/Ordering/notifications",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"callback": "http://example.com/hook"})
+    resp = client.post("/_lab/reset")
+    assert resp.json()["webhooksPreserved"] == 1
+    token = get_token(client)  # reset wiped tokens
+    hooks = client.get("/Customer/v3/Ordering/notifications",
+                       headers={"Authorization": f"Bearer {token}"}).json()["webhooks"]
+    assert [h["callback"] for h in hooks] == ["http://example.com/hook"]

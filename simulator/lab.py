@@ -35,9 +35,14 @@ async def list_events():
 
 @router.post("/reset")
 async def reset():
+    # Webhook registrations are integration config, not scenario state —
+    # resetting the catalog shouldn't sever consumers' completion events.
+    webhooks = store.webhooks
     store.reset()
+    store.webhooks = webhooks
     store.save()
-    return {"status": "reset", "message": "simulator state restored to seed data"}
+    return {"status": "reset", "message": "simulator state restored to seed data",
+            "webhooksPreserved": len(webhooks)}
 
 
 @router.get("/metrics")

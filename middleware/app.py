@@ -192,6 +192,10 @@ async def netbox_hook(request: Request):
 # ---------- manual reconcile trigger --------------------------------------
 @app.post("/reconcile")
 async def reconcile_endpoint():
+    try:
+        register_sim_webhook()  # self-heal the completion leg too
+    except Exception as exc:
+        log.warning("webhook re-registration during reconcile failed: %s", exc)
     reconcile_all("manual trigger")
     return {"action": "reconciled"}
 

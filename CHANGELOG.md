@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.1 — 2026-07-11
+
+Found in demo rehearsal:
+
+- `/_lab/reset` now **preserves webhook registrations** — they're integration config, not scenario state; previously a lab reset silently severed consumers' completion events until the consumer restarted (circuits stuck in `MODIFYING`)
+- middleware `POST /reconcile` re-registers its completion webhook before sweeping, so one call self-heals both the state and the eventing leg
+
 ## v0.1.0 — 2026-07-09
 
 First versioned release.
