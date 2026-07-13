@@ -1,0 +1,2846 @@
+openapi: 3.0.2
+info:
+  title: Multi-Cloud Gateway APIs
+  description: "Multi-Cloud Gateway (MCGW) APIs provides customers a virtual routing service, that can be used to route between Fabric Connections, Fabric Services, and Fabric Ports. APIs provide different levels of control over routing and policies including the ability to establish and control BGP peering."
+  version: 1.0.0
+servers:
+- url: https://api.lumen.com/mcgw/v1
+  description: Production
+security:
+- OAuth2: []
+tags:
+- name: Multi-Cloud Gateway
+  description: Create and manage Multi-Cloud Gateways.
+- name: Multi-Cloud Gateway Interface
+  description: Associate a Fabric Service with a VRF for BGP Management.
+- name: BGP Management
+  description: Manage BGP peering sessions for specific Multi-Cloud Gateway.interfaces.
+- name: Prefix List
+  description: Manage prefix lists for Multi-Cloud Gateway interfaces.
+- name: Static Routes
+  description: Manage static routes for Multi-Cloud Gateway interfaces.
+paths:
+  /gateways:
+    get:
+      tags:
+      - Multi-Cloud Gateway
+      summary: Get gateways.
+      description: Retrieve a detailed list of Multi-Cloud Gateways.
+      operationId: listGateways
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Option to return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK. The request retrieves a list of Multi-Cloud Gateways.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListGatewayResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    post:
+      tags:
+      - Multi-Cloud Gateway
+      summary: Create gateway.
+      description: |
+        Create a Multi-Cloud Gateway.
+      operationId: createGateway
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMultiCloudGateway"
+        required: true
+      responses:
+        "201":
+          description: Created. The request creates the Multi-Cloud Gateway.
+          headers:
+            Location:
+              description: The URL to the newly created MCGW
+              schema:
+                type: string
+                format: uri
+                example: https://api.lumen.com/mcgw/v1/gateways/35578681-0668-4829-ac3b-6edac76ee296
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gateway"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /gateways/{gateway_id}:
+    get:
+      tags:
+      - Multi-Cloud Gateway
+      summary: Get gateway details.
+      description: Retrieve details for a specified Multi-Cloud Gateway.
+      operationId: gatewayDetails
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      responses:
+        "200":
+          description: OK. The request retrieves details for the specified Multi-Cloud Gateway.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gateway"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      tags:
+      - Multi-Cloud Gateway
+      summary: Delete gateway.
+      description: Delete a specified Multi-Cloud Gateway.
+      operationId: deleteGateway
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      responses:
+        "204":
+          description: OK. The request deletes the specified Multi-Cloud Gateway.
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    patch:
+      tags:
+      - Multi-Cloud Gateway
+      summary: Update gateway.
+      description: Update the name, description, or tier of a specified Multi-Cloud Gateway.
+      operationId: updateGateway
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMultiCloudGateway"
+        required: true
+      responses:
+        "200":
+          description: Accepted. The request updates attributes of the specified Multi-Cloud Gateway.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gateway"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/409Conflict"
+        "412":
+          $ref: "#/components/responses/412PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /gateways/{gateway_id}/routes:
+    get:
+      tags:
+      - Multi-Cloud Gateway
+      summary: Get VRF routes.
+      description: Retrieve a list of VRF routes assigned to a specified Multi-Cloud Gateway.
+      operationId: listRoutes
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListRouteResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /gateways/{gateway_id}/static-routes:
+    get:
+      tags:
+      - Static Routes
+      summary: Get static route list.
+      description: Retrieve static route lists.
+      operationId: listStaticRoutes
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the MCGW
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Option to return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK. The request retrieves the static route lists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListStaticRouteResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    post:
+      tags:
+      - Static Routes
+      summary: Create static route.
+      description: Create a list of static routes for Multi-Cloud Gateway.
+      operationId: createStaticRoute
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the MCGW
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStaticRouteRequest"
+        required: true
+      responses:
+        "201":
+          description: Created. The request creates the static route list.
+          headers:
+            Location:
+              description: The URL to the newly created static route
+              schema:
+                type: string
+                format: uri
+                example: https://api.lumen.com/mcgw/v1/gateways/d7d5d71c-5283-4f67-a914-30d238c26046/static-routes/35578681-0668-4829-ac3b-6edac76ee296
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaticRoute"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /gateways/{gateway_id}/static-routes/{static_route_id}:
+    get:
+      tags:
+      - Static Routes
+      summary: Retrieve a static route for MCGW.
+      description: Reference the details of a specific static route for a MCGW.
+      operationId: staticRouteDetails
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the MCGW
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      - name: static_route_id
+        in: path
+        description: Unique identifier for the static route
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaticRoute"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      tags:
+      - Static Routes
+      summary: Delete static route list.
+      description: Delete a specified static route list.
+      operationId: deleteStaticRoute
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the MCGW
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      - name: static_route_id
+        in: path
+        description: Unique identifier for the static route.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "204":
+          description: No Content. The request deletes the specified static route list.
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    patch:
+      tags:
+      - Static Routes
+      summary: Update static route.
+      description: Update the name, destination, and next hop of a specified static route.
+      operationId: updateStaticRoute
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the MCGW
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      - name: static_route_id
+        in: path
+        description: Unique identifier of the static route.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStaticRouteRequest"
+        required: true
+      responses:
+        "200":
+          description: OK. The request updates the specified static route.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaticRoute"
+        "204":
+          description: No Content
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/409Conflict"
+        "412":
+          $ref: "#/components/responses/412PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /gateways/{gateway_id}/interfaces:
+    get:
+      tags:
+      - Multi-Cloud Gateway Interface
+      summary: Get interfaces.
+      description: Retrieve interfaces for a specified Multi-Cloud Gateway.
+      operationId: mcgwAllInterfaceDetails
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+          example: 5cceadea-0412-4ec7-ad31-a2de609b20bf  
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Option to return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK. The request retrieves a list of interfaces for the specified Multi-Cloud Gateway.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListInterfaceResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    post:
+      tags:
+      - Multi-Cloud Gateway Interface
+      summary: Create an interface.
+      description: Create a Multi-Cloud Gateway interface.
+      operationId: newMCGWInterface
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMultiCloudGatewayInterfaceRequest"
+        required: true
+      responses:
+        "202":
+          description: OK. The request creates the Multi-Cloud Gateway interface.
+          headers:
+            Location:
+              description: The URL to the newly created MCGW interface
+              schema:
+                type: string
+                format: uri
+                example: https://api.lumen.com/mcgw/v1/gateways/d7d5d71c-5283-4f67-a914-30d238c26046/interfaces/35578681-0668-4829-ac3b-6edac76ee296
+            Retry-After:
+              description: Number of seconds after which to retry the request for the Interface details
+              schema:
+                type: integer
+                example: 5
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interface"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /gateways/{gateway_id}/interfaces/{interface_id}:
+    get:
+      tags:
+      - Multi-Cloud Gateway Interface
+      summary: Get interface details.
+      description: Retrieve details for a specified Multi-Gateway interface.
+      operationId: mcgwInterfaceDetails
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      - name: interface_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway interface.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK. The request retrieves details for the specified Multi-Cloud Gateway interface.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interface"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      tags:
+      - Multi-Cloud Gateway Interface
+      summary: Delete interface.
+      description: Delete a specified Multi-Cloud Gateway interface.
+      operationId: deleteInterface
+      parameters:
+      - name: interface_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway interface.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 4c85553e-91ce-4eab-9551-2014985f8c84
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      responses:
+        "204":
+          description: OK. The request deletes the specified Multi-Cloud Gateway interface.
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    patch:
+      tags:
+      - Multi-Cloud Gateway Interface
+      summary: Update interface.
+      description: Update a specified Multi-Cloud Gateway interface.
+      operationId: updateInterface
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      - name: interface_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway interface.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 4c85553e-91ce-4eab-9551-2014985f8c84
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInterface"
+        required: true
+      responses:
+        "200":
+          description: Accepted. The request updates the specified Multi-Cloud Gateway interface.
+          headers:
+            Location:
+              description: The URL to the Interface
+              schema:
+                type: string
+                format: uri
+                example: https://api.lumen.com/mcgw/v1/gateways/d7d5d71c-5283-4f67-a914-30d238c26046/interfaces/35578681-0668-4829-ac3b-6edac76ee296
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interface"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/409Conflict"
+        "412":
+          $ref: "#/components/responses/412PreconditionFailed"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /prefix-lists:
+    get:
+      tags:
+      - Prefix List
+      summary: Get prefixes.
+      description: Retrieve lists of all inbound and outbound IP prefixes.
+      operationId: getPrefixLists
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Option to return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK. The request retrieves a list of IP prefixes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListPrefixListResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    post:
+      tags:
+      - Prefix List
+      summary: Create prefix list.
+      description: Create a prefix list for a Multi-Cloud Gateway.
+      operationId: newPrefixList
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePrefixList"
+        required: true
+      responses:
+        "201":
+          description: Accepted. The request creates the prefix list.
+          headers:
+            Location:
+              description: The URL to the newly created prefix list
+              schema:
+                type: string
+                format: uri
+                example: https://api.lumen.com/mcgw/v1/prefix-lists/35578681-0668-4829-ac3b-6edac76ee296
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrefixList"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /prefix-lists/{prefix_list_id}:
+    get:
+      tags:
+      - Prefix List
+      summary: Get prefix list.
+      description: Retrieve details for a specified prefix list.
+      operationId: getPrefixList
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: prefix_list_id
+        in: path
+        description: Unique identifier for the prefix list.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 12345678-1234-1234-1234-123456789012
+      responses:
+        "200":
+          description: OK. The request retrieves details for the specified prefix list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrefixList"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    put:
+      tags:
+      - Prefix List
+      summary: Update prefix list.
+      description: Revise a specified prefix list entirely.
+      operationId: updatePrefixList
+      parameters:
+      - name: prefix_list_id
+        in: path
+        description: Unique identifier for the prefix list.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 12345678-1234-1234-1234-123456789012
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePrefixList"
+        required: true
+      responses:
+        "200":
+          description: OK. The request updates the specified prefix list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrefixList"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      tags:
+      - Prefix List
+      summary: Delete prefix list.
+      description: Delete a specified prefix list.
+      operationId: deletePrefixList
+      parameters:
+      - name: prefix_list_id
+        in: path
+        description: Unique identifier for the prefix list.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: pfxl:12345678-1234-1234-1234-123456789012
+      responses:
+        "204":
+          description: Deleted. The request deletes the specified prefix list.
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    patch:
+      tags:
+      - Prefix List
+      summary: Update prefix list.
+      description: Remove and replace prefixes on a specified prefix list.
+      operationId: patchPrefixList
+      parameters:
+      - name: prefix_list_id
+        in: path
+        description: Unique identifier for the prefix list.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 12345678-1234-1234-1234-123456789012
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchPrefixList"
+        required: true
+      responses:
+        "200":
+          description: OK. The request updates the prefix list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrefixList"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /gateways/{gateway_id}/interfaces/{interface_id}/bgp-sessions:
+    get:
+      tags:
+      - BGP Management
+      summary: Get sessions.
+      description: Retrieve all active BGP sessions for a specified Multi-Cloud Gateway interface.
+      operationId: getAllBgpSessions
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the MCGW interface.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      - name: interface_id
+        in: path
+        description: Unique identifier for the MCGW interface.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK. The request retrieves all active BGP sessions for the specified Multi-Cloud Gateway interface.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BgpSessionListResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    post:
+      tags:
+      - BGP Management
+      summary: Create sessions.
+      description: Create up to three BGP peering sessions.
+      operationId: createBgpSession
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      - name: interface_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway interface.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 4c85553e-91ce-4eab-9551-2014985f8c84
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBgpSession"
+        required: true
+      responses:
+        "201":
+          description: Accepted. The request creates the BGP sessions for the Multi-Cloud Gateway interface.
+          headers:
+            Location:
+              description: The URL to the newly created BGP session
+              schema:
+                type: string
+                format: uri
+                example: https://api.lumen.com/mcgw/v1/gateways/b4138122-d6e1-45bb-a8ee-49f7fccafcc2/interfaces/d7d5d71c-5283-4f67-a914-30d238c26046/bgp-sessions/35578681-0668-4829-ac3b-6edac76ee296
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BgpSession"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /gateways/{gateway_id}/interfaces/{interface_id}/bgp-sessions/{session_id}:
+    get:
+      tags:
+      - BGP Management
+      summary: Get session details.
+      description: Retrieve details for a specified BGP session.
+      operationId: getBgpSession
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      - name: interface_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway interface.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 4c85553e-91ce-4eab-9551-2014985f8c84
+      - name: session_id
+        in: path
+        description: Unique identifier for the BGP session.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: d5b89350-8e91-410e-932c-1644c314aa6e
+      responses:
+        "200":
+          description: OK. The request retrieves details about the specified BGP session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BgpSession"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      tags:
+      - BGP Management
+      summary: Delete session.
+      description: Delete a specified BGP session.
+      operationId: deleteBgpSession
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      - name: interface_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway interface.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 4c85553e-91ce-4eab-9551-2014985f8c84
+      - name: session_id
+        in: path
+        description: Unique identifier for the BGP session.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: d5b89350-8e91-410e-932c-1644c314aa6e
+      responses:
+        "204":
+          description: Accepted. The request deletes the specified BGP session.
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    patch:
+      tags:
+      - BGP Management
+      summary: Update session.
+      description: Update a specified Multi-Cloud Gateway interface BGP session.
+      operationId: updateBgpSession
+      parameters:
+      - name: gateway_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+      - name: interface_id
+        in: path
+        description: Unique identifier for the Multi-Cloud Gateway interface.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: 4c85553e-91ce-4eab-9551-2014985f8c84
+      - name: session_id
+        in: path
+        description: Unique identifier for the BGP session.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+        example: d5b89350-8e91-410e-932c-1644c314aa6e
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBgpSession"
+        required: true
+      responses:
+        "200":
+          description: Accepted. The request updates the BGP session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BgpSession"
+        "204":
+          description: No Content
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/409Conflict"
+        "412":
+          $ref: "#/components/responses/412PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+components:
+  schemas:
+    ResourceName:
+      pattern: "^[A-Za-z0-9_' -]{1,32}$"
+      type: string
+      description: "Name of the resource, up to 32 characters, allowing letters, apostrophes, numbers, spaces, and hyphens."
+      example: My Resource-01
+    IpAddressFamily:
+      type: string
+      description: IP Address Family (IPV4 or IPV6).
+      example: IPV4
+      enum:
+      - IPV4
+      default: IPV4
+    Tier:
+      type: string
+      description: Tier of the MCGW Service
+      example: 50 Gbps
+      enum:
+      - 10 Gbps
+      - 50 Gbps
+      - Unlimited
+    CreatePrefixListId:
+      required:
+      - prefix_list_id
+      type: object
+      properties:
+        prefix_list_id:
+          $ref: "#/components/schemas/McgwEntityId"
+    McgwEntityId:
+      pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      type: string
+      description: Unique identifier for the MCGW Entities
+      example: 4c85553e-91ce-4eab-9551-2014985f8c84
+    Med:
+      type: integer
+      description: Multi-Exit Discriminator (MED) value for the BGP session
+      example: 100
+      enum:
+      - 100
+      - 200
+      - 300
+    PrefixListRef:
+      type: object
+      properties:
+        prefix_list_id:
+          allOf:
+          - $ref: "#/components/schemas/McgwEntityId"
+          - description: Prefix list ID
+        name:
+          type: string
+          description: Prefix list name
+    Asn:
+      type: integer
+      description: Autonomous System Number for BGP routing.
+      example: 1
+      enum:
+      - 1
+      default: 1
+    RemoteAsn:
+      maximum: 65535
+      minimum: 1
+      type: integer
+      description: Remote Autonomous System Number for BGP routing.
+      example: 65534
+    RemotePeerIp:
+      pattern: "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$"
+      type: string
+      description: Remote peer IP address for the BGP session
+      example: 192.168.7.34
+    BfdInterval:
+      type: integer
+      description: BFD interval in milliseconds for the BGP session
+      example: 500
+      enum:
+      - 500
+      - 1000
+      - 1500
+      - 2000
+      default: 500
+    BfdMultiplier:
+      maximum: 10
+      minimum: 5
+      type: integer
+      description: BFD multiplier for the BGP session
+      example: 6
+      default: 5
+    ConnectionBandwidth:
+      type: integer
+      description: Bandwidth of the connection in Megabits per second (Mbps).
+      example: 5000
+      enum:
+      - 10
+      - 20
+      - 50
+      - 100
+      - 200
+      - 300
+      - 400
+      - 500
+      - 1000
+      - 2000
+      - 3000
+      - 5000
+      - 10000
+      - 15000
+      - 20000
+      - 25000
+      - 30000
+      - 40000
+      - 50000
+      - 60000
+      - 70000
+      - 80000
+      - 90000
+      - 100000
+    CreatedAt:
+      type: string
+      description: Timestamp when the resource was created
+      format: date-time
+      readOnly: true
+      example: 2025-10-10T14:20:25Z
+    CreatedBy:
+      type: string
+      description: The person or system that submitted a request creating the resource
+      readOnly: true
+      example: Laura Palmer
+    UpdatedAt:
+      type: string
+      description: Timestamp when the resource was last modified
+      format: date-time
+      nullable: true
+      readOnly: true
+      example: 2025-11-10T14:25:25Z
+    UpdatedBy:
+      type: string
+      description: The person or system that last submitting a request modifying the resource
+      nullable: true
+      readOnly: true
+      example: Dale Cooper
+    LifecycleStatus:
+      type: string
+      description: The lifecycle status of the resource
+      readOnly: true
+      example: PROVISIONED
+      enum:
+      - PENDING
+      - PROVISIONING
+      - PROVISIONED
+      - FAILED
+      - DELETING
+      - DELETED
+    GatewayTierPrice:
+      required:
+      - price_monthly
+      - tier
+      type: object
+      properties:
+        tier:
+          type: string
+          description: Gateway tier identifier
+          example: 100G
+        price_monthly:
+          pattern: "^(0|[1-9]\\d*)(\\.\\d{1,6})?$"
+          type: string
+          description: Monthly price as a decimal string with up to 6 fractional digits
+          example: "375.0"
+      additionalProperties: false
+      example:
+        tier: 100G
+        price_monthly: "750.000000"
+    InterfacePrice:
+      required:
+      - interface
+      - price_hourly
+      - price_monthly
+      type: object
+      properties:
+        interface:
+          type: string
+          description: Interface type identifier
+          example: default
+        price_hourly:
+          pattern: "^(0|[1-9]\\d*)(\\.\\d{1,6})?$"
+          type: string
+          description: Hourly price as a decimal string with up to 6 fractional digits
+          example: "0.20"
+        price_monthly:
+          pattern: "^(0|[1-9]\\d*)(\\.\\d{1,6})?$"
+          type: string
+          description: Monthly price as a decimal string with up to 6 fractional digits
+          example: "100.80"
+      additionalProperties: false
+      example:
+        interface: default
+        price_hourly: "0.200000"
+        price_monthly: "100.800000"
+    EffectivePrice:
+      required:
+      - effective_at
+      - period
+      - rate
+      type: object
+      properties:
+        period:
+          $ref: "#/components/schemas/PricingTerm"
+        rate:
+          pattern: "^(0|[1-9]\\d*)(\\.\\d{1,6})?$"
+          type: string
+          description: Decimal monetary amount with up to 6 fractional digits.
+          example: "123.456789"
+        effective_at:
+          type: string
+          description: "RFC 3339 timestamp when this price became effective (captured at provisioning or tier change). Immutable until replaced (e.g., gateway tier PATCH)."
+          format: date-time
+          readOnly: true
+        terminated_at:
+          type: string
+          description: RFC 3339 timestamp when this price was terminated.
+          format: date-time
+          readOnly: true
+      additionalProperties: true
+      example:
+        period: Monthly
+        rate: "375.000000"
+        effective_at: 2026-01-01T12:00:00Z
+    PricingTerm:
+      type: string
+      description: Pricing Term
+      example: Hourly
+      enum:
+      - Hourly
+      - Monthly
+      default: Monthly
+    GatewayTerm:
+      type: string
+      description: Gateway Term
+      example: Monthly
+      enum:
+      - Monthly
+      default: Monthly
+    CreateMultiCloudGateway:
+      required:
+      - billing_account_number
+      - customer_number
+      - name
+      - tier
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        description:
+          maxLength: 500
+          type: string
+          example: Primary production gateway for east region cloud connectivity
+        tier:
+          $ref: "#/components/schemas/Tier"
+        asn:
+          $ref: "#/components/schemas/Asn"
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+        term:
+          $ref: "#/components/schemas/GatewayTerm"
+      additionalProperties: false
+      description: Request body to create a Multi-Cloud Gateway
+      example:
+        name: Primary-Prod-MCGW
+        description: Primary production gateway for east region cloud connectivity
+        tier: 50 Gbps
+        asn: 1
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+        term: Monthly
+    UpdateMultiCloudGateway:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        description:
+          maxLength: 500
+          type: string
+          description: Optional detailed description of the MCGW
+          example: Primary production gateway for east region cloud connectivity
+        tier:
+          $ref: "#/components/schemas/Tier"
+        term:
+          $ref: "#/components/schemas/GatewayTerm"
+      additionalProperties: false
+      description: Request body to update a Multi-Cloud Gateway
+      example:
+        name: Primary-Prod-MCGW-Updated
+        description: Updated production gateway description
+        tier: 50 Gbps
+    Gateway:
+      required:
+      - asn
+      - name
+      type: object
+      properties:
+        gateway_id:
+          allOf:
+          - $ref: "#/components/schemas/McgwEntityId"
+          - description: Unique identifier for the MCGW
+            example: 5cceadea-0412-4ec7-ad31-a2de609b20bf
+        state:
+          $ref: "#/components/schemas/LifecycleStatus"
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        description:
+          maxLength: 500
+          type: string
+          description: Optional detailed description of the MCGW
+          example: Primary production gateway for east region cloud connectivity
+        tier:
+          $ref: "#/components/schemas/Tier"
+        asn:
+          $ref: "#/components/schemas/Asn"
+        total_aggregate_bw:
+          type: string
+          description: Current used bandwidth on the gateway
+          example: 500 Mbps
+        term:
+          $ref: "#/components/schemas/GatewayTerm"
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+        created_at:
+          $ref: "#/components/schemas/CreatedAt"
+        created_by:
+          $ref: "#/components/schemas/CreatedBy"
+        updated_at:
+          $ref: "#/components/schemas/UpdatedAt"
+        updated_by:
+          $ref: "#/components/schemas/UpdatedBy"
+      additionalProperties: false
+      description: Details for a Multi-Cloud Gateway
+      example:
+        gateway_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+        state: PROVISIONED
+        name: Primary-Prod-MCGW
+        description: Primary production gateway for east region cloud connectivity
+        tier: 10 Gbps
+        asn: 1
+        total_aggregate_bw: 500 Mbps
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+        created_at: 2026-01-01T12:00:00Z
+        created_by: user123
+        updated_at: 2026-01-10T12:00:00Z
+        updated_by: user123
+    ListGatewayResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of gateways matching the query parameters
+          items:
+            $ref: "#/components/schemas/Gateway"
+      description: Response body for listing Multi-Cloud Gateways with pagination details
+      example:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 1
+        data:
+        - gateway_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+          state: PROVISIONED
+          name: Primary-Prod-MCGW
+          description: Primary production gateway for east region cloud connectivity
+          tier: 10 Gbps
+          asn: 1
+          total_aggregate_bw: 500 Mbps
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+          created_at: 2026-01-01T12:00:00Z
+          created_by: user123
+          updated_at: 2026-01-10T12:00:00Z
+          updated_by: user123
+    ListInterfaceResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of gateways matching the query parameters
+          items:
+            $ref: "#/components/schemas/Interface"
+      example:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 1
+        data:
+        - interface_id: d7d5d71c-5283-4f67-a914-30d238c26046
+          state: PROVISIONED
+          name: Production-MCGW-East
+          description: Primary production gateway for east region cloud connectivity
+          gateway:
+            name: Primary-Prod-MCGW
+            gateway_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+          connection:
+            name: Production-MCGW-East
+            connection_id: 12345678-1234-4234-8234-123456789012
+            bandwidth: 100
+          address_family: IPV4
+          ipv4_address: 10.0.0.64/29
+          bgp_sessions: []
+          term: Monthly
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+          created_at: 2026-01-01T12:00:00Z
+          created_by: user123
+          updated_at: 2026-01-10T12:00:00Z
+          updated_by: user123
+    Interface:
+      type: object
+      properties:
+        interface_id:
+          allOf:
+          - $ref: "#/components/schemas/McgwEntityId"
+          - description: Unique identifier for the Interface
+            example: 4c85553e-91ce-4eab-9551-2014985f8c84
+        state:
+          $ref: "#/components/schemas/LifecycleStatus"
+        name:
+          maxLength: 255
+          type: string
+          description: Customer-provided name for the MCGW service interface
+          example: Production-MCGW-East
+        description:
+          type: string
+          description: Optional detailed description of the Interface
+          example: Primary production gateway for east region cloud connectivity
+        gateway:
+          $ref: "#/components/schemas/GatewayRef"
+        connection:
+          $ref: "#/components/schemas/InterfaceConnection"
+        address_family:
+          type: string
+          description: IP Address Family for the Interface
+          enum:
+          - IPV4
+          default: IPV4
+        ipv4_address:
+          pattern: "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\/[0-9]{1,2}$"
+          type: string
+          description: IP address assigned to the Interface
+          example: 10.0.0.64/29
+        bgp_sessions:
+          maxItems: 3
+          type: array
+          description: List of BGP sessions associated with the Interface
+          items:
+            $ref: "#/components/schemas/BgpSession"
+        term:
+          $ref: "#/components/schemas/PricingTerm"
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+        created_at:
+          $ref: "#/components/schemas/CreatedAt"
+        created_by:
+          $ref: "#/components/schemas/CreatedBy"
+        updated_at:
+          $ref: "#/components/schemas/UpdatedAt"
+        updated_by:
+          $ref: "#/components/schemas/UpdatedBy"
+      additionalProperties: false
+      description: Details for a Multi-Cloud Gateway Interface
+      example:
+        interface_id: d7d5d71c-5283-4f67-a914-30d238c26046
+        state: PROVISIONED
+        name: Production-MCGW-East
+        description: Primary production gateway for east region cloud connectivity
+        gateway:
+          name: Primary-Prod-MCGW
+          gateway_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+        connection:
+          name: Production-MCGW-East
+          connection_id: 12345678-1234-4234-8234-123456789012
+          bandwidth: 1000
+        address_family: IPV4
+        ipv4_address: 10.0.0.64/29
+        bgp_sessions: []
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+        created_at: 2026-01-01T12:00:00Z
+        created_by: user123
+        updated_at: 2026-01-10T12:00:00Z
+        updated_by: user123
+    GatewayRef:
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+          description: Customer-provided name for the MCGW service interface
+          example: Production-MCGW-East
+        gateway_id:
+          allOf:
+          - $ref: "#/components/schemas/McgwEntityId"
+          - description: Unique identifier for the MCGW
+    InterfaceConnection:
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+          description: Customer-provided name for the MCGW service interface
+          example: Production-MCGW-East
+        connection_id:
+          type: string
+          description: Unique identifier for the connection
+          example: 12345678-1234-4234-8234-123456789012
+        bandwidth:
+          $ref: "#/components/schemas/ConnectionBandwidth"
+      description: Details of the underlying network connection
+      example:
+        connection_id: 12345678-1234-4234-8234-123456789012
+        bandwidth: 100
+    UpdateInterface:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        description:
+          maxLength: 500
+          type: string
+          description: Optional detailed description of the Interface
+          example: Primary production gateway for east region cloud connectivity
+        ipv4_address:
+          pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}\\/([0-9]|[1-2][0-9]|3[0-2])$"
+          type: string
+          description: IP address assigned to the Interface
+          format: ipv4-cidr
+          example: 10.0.0.64/29
+        term:
+          $ref: "#/components/schemas/PricingTerm"
+      description: Request body to update a Multi-Cloud Gateway Interface
+      example:
+        name: Production-MCGW-East-Updated
+        description: Updated production gateway description
+        ipv4_address: 10.0.0.64/29
+        term: Monthly
+    BgpSessionListResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of BGP sessions matching the query parameters
+          items:
+            $ref: "#/components/schemas/BgpSession"
+      example:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 1
+        data:
+        - session_id: b4138122-d6e1-45bb-a8ee-49f7fccafcc2
+          state: PROVISIONED
+          name: BGP-Session-1
+          address_family: IPV4
+          interface_id: d7d5d71c-5283-4f67-a914-30d238c26046
+          inbound_prefix_list:
+            prefix_list_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+            name: Inbound-PL
+          outbound_prefix_list:
+            prefix_list_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+            name: Outbound-PL
+          remote_asn: 65534
+          remote_peer_ip: 192.168.7.34
+          default_originate: true
+          redistribute_static_routes: true
+          bfd: true
+          bfd_interval: 500
+          bfd_multiplier: 6
+          med: 100
+          md5_authentication: true
+          md5_password: 482c811da5d5b4bc6d497ffa98491e38
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+          created_at: 2026-01-01T12:00:00Z
+          created_by: user123
+          updated_at: 2026-01-10T12:00:00Z
+          updated_by: user123
+    BgpSession:
+      type: object
+      properties:
+        session_id:
+          allOf:
+          - $ref: "#/components/schemas/McgwEntityId"
+          - description: Unique identifier for the BGP session
+            example: d5b89350-8e91-410e-932c-1644c314aa6e
+        state:
+          $ref: "#/components/schemas/LifecycleStatus"
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        address_family:
+          $ref: "#/components/schemas/IpAddressFamily"
+        interface_id:
+          allOf:
+          - $ref: "#/components/schemas/McgwEntityId"
+          - description: Unique identifier for the Interface
+        inbound_prefix_list:
+          $ref: "#/components/schemas/PrefixListRef"
+        outbound_prefix_list:
+          $ref: "#/components/schemas/PrefixListRef"
+        remote_asn:
+          $ref: "#/components/schemas/RemoteAsn"
+        remote_peer_ip:
+          $ref: "#/components/schemas/RemotePeerIp"
+        default_originate:
+          type: boolean
+          description: Indicates if default origin is set for the BGP session
+          example: true
+        redistribute_static_routes:
+          type: boolean
+          description: Indicates if static routes are redistributed in the BGP session
+          example: true
+        bfd:
+          type: boolean
+          description: Indicates if BFD (Bidirectional Forwarding Detection) is enabled for the BGP session
+          example: true
+        bfd_interval:
+          $ref: "#/components/schemas/BfdInterval"
+        bfd_multiplier:
+          $ref: "#/components/schemas/BfdMultiplier"
+        med:
+          $ref: "#/components/schemas/Med"
+        md5_authentication:
+          type: boolean
+          description: Indicates if MD5 authentication is enabled for the BGP session
+          example: true
+        md5_password:
+          type: string
+          description: MD5 password for the BGP session
+          example: 482c811da5d5b4bc6d497ffa98491e38
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+        created_at:
+          $ref: "#/components/schemas/CreatedAt"
+        created_by:
+          $ref: "#/components/schemas/CreatedBy"
+        updated_at:
+          $ref: "#/components/schemas/UpdatedAt"
+        updated_by:
+          $ref: "#/components/schemas/UpdatedBy"
+      description: BGP session details
+      example:
+        session_id: b4138122-d6e1-45bb-a8ee-49f7fccafcc2
+        state: PROVISIONED
+        name: BGP-Session-1
+        address_family: IPV4
+        interface_id: d7d5d71c-5283-4f67-a914-30d238c26046
+        inbound_prefix_list:
+          prefix_list_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+          name: Inbound-PL
+        outbound_prefix_list:
+          prefix_list_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+          name: Outbound-PL
+        remote_asn: 65534
+        remote_peer_ip: 192.168.7.34
+        default_originate: true
+        redistribute_static_routes: true
+        bfd: true
+        bfd_interval: 500
+        bfd_multiplier: 6
+        med: 100
+        md5_authentication: true
+        md5_password: 482c811da5d5b4bc6d497ffa98491e38
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+        created_at: 2026-01-01T12:00:00Z
+        created_by: user123
+        updated_at: 2026-01-10T12:00:00Z
+        updated_by: user123
+    CreateBgpSession:
+      required:
+      - inbound_prefix_list
+      - name
+      - outbound_prefix_list
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        address_family:
+          $ref: "#/components/schemas/IpAddressFamily"
+        inbound_prefix_list:
+          $ref: "#/components/schemas/CreatePrefixListId"
+        outbound_prefix_list:
+          $ref: "#/components/schemas/CreatePrefixListId"
+        remote_asn:
+          $ref: "#/components/schemas/RemoteAsn"
+        remote_peer_ip:
+          $ref: "#/components/schemas/RemotePeerIp"
+        default_originate:
+          type: boolean
+          description: Indicates if default origin is set for the BGP session
+          example: true
+        redistribute_static_routes:
+          type: boolean
+          description: Indicates if static routes are redistributed in the BGP session
+          example: true
+        bfd:
+          type: boolean
+          description: Indicates if BFD (Bidirectional Forwarding Detection) is enabled for the BGP session
+          example: true
+        bfd_interval:
+          $ref: "#/components/schemas/BfdInterval"
+        bfd_multiplier:
+          $ref: "#/components/schemas/BfdMultiplier"
+        med:
+          $ref: "#/components/schemas/Med"
+        md5_authentication:
+          type: boolean
+          description: Indicates if MD5 authentication is enabled for the BGP session
+          example: true
+        md5_password:
+          type: string
+          description: MD5 password for the BGP session
+          example: 482c811da5d5b4bc6d497ffa98491e38
+      description: BGP session create payload
+      example:
+        name: BGP-Session-1
+        address_family: IPV4
+        inbound_prefix_list:
+          prefix_list_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+        outbound_prefix_list:
+          prefix_list_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+        remote_asn: 65534
+        remote_peer_ip: 192.168.7.34
+        default_originate: true
+        redistribute_static_routes: true
+        bfd: true
+        bfd_interval: 500
+        bfd_multiplier: 6
+        med: 100
+        md5_authentication: true
+        md5_password: 482c811da5d5b4bc6d497ffa98491e38
+    UpdateBgpSession:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        address_family:
+          $ref: "#/components/schemas/IpAddressFamily"
+        inbound_prefix_list:
+          $ref: "#/components/schemas/CreatePrefixListId"
+        outbound_prefix_list:
+          $ref: "#/components/schemas/CreatePrefixListId"
+        remote_asn:
+          $ref: "#/components/schemas/RemoteAsn"
+        remote_peer_ip:
+          $ref: "#/components/schemas/RemotePeerIp"
+        default_originate:
+          type: boolean
+          description: Indicates if default origin is set for the BGP session
+          example: true
+        bfd:
+          type: boolean
+          description: Indicates if BFD (Bidirectional Forwarding Detection) is enabled for the BGP session
+          example: true
+        bfd_interval:
+          $ref: "#/components/schemas/BfdInterval"
+        bfd_multiplier:
+          $ref: "#/components/schemas/BfdMultiplier"
+        med:
+          $ref: "#/components/schemas/Med"
+        md5_authentication:
+          type: boolean
+          description: Indicates if MD5 authentication is enabled for the BGP session
+          example: true
+        md5_password:
+          type: string
+          description: MD5 password for the BGP session
+          example: 482c811da5d5b4bc6d497ffa98491e38
+      description: BGP session update payload
+      example:
+        name: BGP-Session-1-Updated
+        address_family: IPV4
+        inbound_prefix_list:
+          prefix_list_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+        outbound_prefix_list:
+          prefix_list_id: 4c85553e-91ce-4eab-9551-2014985f8c84
+        remote_asn: 65534
+        remote_peer_ip: 192.168.7.34
+        default_originate: true
+        bfd: true
+        bfd_interval: 1000
+        bfd_multiplier: 6
+        med: 200
+        md5_authentication: false
+    CreatePrefixList:
+      required:
+      - name
+      - prefixes
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        address_family:
+          $ref: "#/components/schemas/IpAddressFamily"
+        prefixes:
+          type: array
+          description: List of prefixes
+          items:
+            $ref: "#/components/schemas/Prefix"
+      description: Prefix list details
+      example:
+        name: PL-EAST-PROD
+        address_family: IPV4
+        prefixes:
+        - prefix: 10.10.0.0/16
+          match_type: exact
+          local_preference: 200
+          med: 100
+          as_prepend: 1
+        - prefix: 10.20.0.0/16
+          match_type: longer
+          local_preference: 100
+          med: 200
+          as_prepend: 2
+    UpdatePrefixList:
+      required:
+      - name
+      - prefixes
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        prefixes:
+          type: array
+          description: List of prefixes
+          items:
+            $ref: "#/components/schemas/Prefix"
+      description: Prefix list details
+      example:
+        name: PL-EAST-PROD-UPDATED
+        prefixes:
+        - prefix: 10.10.0.0/16
+          match_type: exact
+          local_preference: 200
+          med: 100
+          as_prepend: 1
+        - prefix: 10.30.0.0/16
+          match_type: exact
+          local_preference: 600
+          med: 300
+          as_prepend: 3
+    PatchPrefixList:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        remove:
+          type: array
+          description: List of prefixes
+          items:
+            $ref: "#/components/schemas/Prefix"
+        update:
+          type: array
+          description: List of prefixes
+          items:
+            $ref: "#/components/schemas/Prefix"
+      description: Prefix list details
+      example:
+        name: PL-EAST-PROD-PATCHED
+        remove:
+        - prefix: 10.20.0.0/16
+          match_type: longer
+          local_preference: 100
+          med: 200
+          as_prepend: 2
+        update:
+        - prefix: 10.40.0.0/16
+          match_type: exact
+          local_preference: 700
+          med: 300
+          as_prepend: 1
+    ListPrefixListResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of prefix lists
+          items:
+            $ref: "#/components/schemas/PrefixList"
+      example:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 1
+        data:
+        - prefix_list_id: 0d2a8fd9-c52c-4fcf-8c4a-8bc34c0a8d52
+          name: PL-EAST-PROD
+          prefixes:
+          - prefix: 10.10.0.0/16
+            match_type: exact
+            local_preference: 200
+            med: 100
+            as_prepend: 1
+          created_at: 2026-01-01T12:00:00Z
+          created_by: user123
+          updated_at: 2026-01-10T12:00:00Z
+          updated_by: user123
+    PrefixList:
+      type: object
+      properties:
+        prefix_list_id:
+          allOf:
+          - $ref: "#/components/schemas/McgwEntityId"
+          - description: Unique identifier for the prefix list.
+            example: d5b89350-8e91-410e-932c-1644c314aa6e
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        prefixes:
+          type: array
+          description: List of prefixes
+          items:
+            $ref: "#/components/schemas/Prefix"
+        address_family:
+          $ref: "#/components/schemas/IpAddressFamily"
+        created_at:
+          $ref: "#/components/schemas/CreatedAt"
+        created_by:
+          $ref: "#/components/schemas/CreatedBy"
+        updated_at:
+          $ref: "#/components/schemas/UpdatedAt"
+        updated_by:
+          $ref: "#/components/schemas/UpdatedBy"
+      description: Prefix list details
+      example:
+        prefix_list_id: 3f4a7c2e-1b9d-4f8a-a2de-1d0d5d10a001
+        name: pl-allow-core
+        prefixes:
+        - prefix: 10.10.0.0/16
+          match_type: exact
+          local_preference: 200
+          med: 100
+          as_prepend: 1
+        - prefix: 10.20.0.0/16
+          match_type: longer
+          local_preference: 100
+          med: 200
+          as_prepend: 2
+        created_at: 2026-01-01T12:00:00Z
+        created_by: user123
+        updated_at: 2026-01-10T12:00:00Z
+        updated_by: user456
+    Prefix:
+      required:
+      - prefix
+      type: object
+      properties:
+        prefix:
+          pattern: "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\/[0-9]{1,2}$"
+          type: string
+          description: Prefix CIDR.
+          example: 192.168.1.0/24
+        match_type:
+          type: string
+          description: Type of match for the prefix
+          example: exact
+          enum:
+          - exact
+          - longer
+          default: exact
+        local_preference:
+          maximum: 4294967295
+          minimum: 0
+          type: integer
+          description: Local preference value for the prefix
+          example: 100
+          enum:
+          - 100
+          - 200
+          - 600
+          - 700
+          - 800
+          - 900
+        med:
+          $ref: "#/components/schemas/Med"
+        as_prepend:
+          maximum: 3
+          minimum: 1
+          type: integer
+          description: AS path prepend value for the prefix
+          example: 1
+          enum:
+          - 1
+          - 2
+          - 3
+      description: Prefix details
+      example:
+        prefix: 192.168.1.0/24
+        match_type: exact
+        local_preference: 200
+        med: 100
+        as_prepend: 1
+    ListStaticRouteResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of static routes
+          items:
+            $ref: "#/components/schemas/StaticRoute"
+      example:
+        pagination:
+          limit: 25
+          offset: 0
+          total: 1
+        data:
+        - static_route_id: 7d0f8f3e-4fb1-4f13-a647-1f4f2c13f001
+          name: to-core-network
+          address_family: IPV4
+          destination: 172.16.10.0/24
+          next_hop: 10.0.0.1
+    StaticRoute:
+      required:
+      - destination
+      - name
+      - next_hop
+      type: object
+      properties:
+        static_route_id:
+          allOf:
+          - $ref: "#/components/schemas/McgwEntityId"
+          - description: Unique identifier for the static route
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        address_family:
+          $ref: "#/components/schemas/IpAddressFamily"
+        destination:
+          pattern: "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\/[0-9]{1,2}$"
+          type: string
+          description: Destination CIDR for the static route
+          example: 192.168.1.0/24
+        next_hop:
+          pattern: "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$"
+          type: string
+          description: Next hop
+          example: 192.168.0.1
+      description: Static route details
+      example:
+        static_route_id: 7d0f8f3e-4fb1-4f13-a647-1f4f2c13f001
+        name: to-core-network
+        address_family: IPV4
+        destination: 172.16.10.0/24
+        next_hop: 10.0.0.1
+    CreateStaticRouteRequest:
+      required:
+      - destination
+      - name
+      - next_hop
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        destination:
+          pattern: "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\/[0-9]{1,2}$"
+          type: string
+          description: Destination CIDR for the static route
+          example: 192.168.1.0/24
+        next_hop:
+          pattern: "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$"
+          type: string
+          description: Next hop
+          example: 192.168.0.1
+      description: Create Static route details
+      example:
+        name: to-core-network
+        destination: 172.16.10.0/24
+        next_hop: 10.0.0.1
+    UpdateStaticRouteRequest:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/ResourceName"
+        destination:
+          pattern: "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\/[0-9]{1,2}$"
+          type: string
+          description: Destination CIDR for the static route
+          example: 192.168.1.0/24
+        next_hop:
+          pattern: "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$"
+          type: string
+          description: Next hop
+          example: 192.168.0.1
+      description: Update static route details
+      example:
+        name: to-core-network-updated
+        destination: 172.16.20.0/24
+        next_hop: 10.0.0.2
+    Route:
+      required:
+      - prefix
+      type: object
+      properties:
+        prefix:
+          type: string
+          description: Network IP address and CIDR notation
+          readOnly: true
+          example: 192.168.1.0/24
+        next_hop:
+          type: string
+          readOnly: true
+          description: Next hop
+          example: 192.168.0.1
+        next_hop_alias:
+          type: string
+          readOnly: true
+          example: Next_hop
+        interface_name:
+          type: string
+          readOnly: true
+          example: Production-MCGW-East
+        interface_id:
+          type: string
+          readOnly: true
+          example: 4c85553e-91ce-4eab-9551-2014985f8c84
+        first_added_at:
+          type: string
+          description: Timestamp when the route was first added to the Gateway
+          format: date-time
+          readOnly: true
+        last_updated_at:
+          type: string
+          description: Timestamp when the route was last updated in the Gateway
+          format: date-time
+          readOnly: true
+        med:
+          maximum: 5000
+          minimum: 0
+          type: integer
+          description: Multi exit discriminator
+          format: int64
+          readOnly: true
+        local_pref:
+          maximum: 5000
+          minimum: 0
+          type: integer
+          description: Local preference
+          format: int64
+          readOnly: true
+        as_path:
+          maximum: 5000
+          minimum: 0
+          type: string
+          description: AS Path
+          readOnly: true
+          example: "3257"
+        route_type:
+          type: string
+          description: "Route type, bgp, static route etc."
+          readOnly: true
+          example: bgp
+      description: VRF route information
+      example:
+        prefix: 10.50.0.0/16
+        next_hop: 169.254.1.1
+        next_hop_alias: bgp-peer-primary
+        interface_name: mcgw-ifc-01
+        interface_id: 0f40d9cc-6528-4b24-a6cf-07d86f5f1001
+        first_added_at: 2026-05-01T10:00:00Z
+        last_updated_at: 2026-05-01T12:15:00Z
+        med: 100
+        local_pref: 200
+        as_path: 65001 65100
+        route_type: bgp
+    ListRouteResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of routes for a Gateway
+          items:
+            $ref: "#/components/schemas/Route"
+      description: Currently active routes with pagination metadata and route data.
+      example:
+        pagination:
+          limit: 25
+          offset: 0
+          total: 2
+        data:
+        - prefix: 10.50.0.0/16
+          next_hop: 169.254.1.1
+          next_hop_alias: bgp-peer-primary
+          interface_name: mcgw-ifc-01
+          interface_id: 0f40d9cc-6528-4b24-a6cf-07d86f5f1001
+          first_added_at: 2026-05-01T10:00:00Z
+          last_updated_at: 2026-05-01T12:15:00Z
+          med: 100
+          local_pref: 200
+          as_path: 65001 65100
+          route_type: bgp
+        - prefix: 172.16.10.0/24
+          next_hop: 10.0.0.1
+          next_hop_alias: static-route
+          interface_name: mcgw-ifc-01
+          interface_id: 0f40d9cc-6528-4b24-a6cf-07d86f5f1001
+          first_added_at: 2026-05-01T09:00:00Z
+          last_updated_at: 2026-05-01T09:00:00Z
+          med: 100
+          local_pref: 0
+          as_path: ""
+          route_type: static
+    LpdpError:
+      required:
+      - code
+      - detail
+      - message
+      type: object
+      properties:
+        detail:
+          type: string
+          description: "A granular description on the specific error related to a body property, query parameter, path parameters, and/or header."
+          example: The 'name' field is required and must be a non-empty string.
+        pointer:
+          type: string
+          description: A JSON Pointer to a specific request body property that is the source of error.
+          example: /data/attributes/name
+        parameter:
+          type: string
+          description: The name of the query or path parameter that is the source of error.
+          example: name
+        header:
+          type: string
+          description: The name of the header that is the source of error.
+          example: Authorization
+        code:
+          type: string
+          description: An optional error code that is specific to the API and error condition. This can be used by clients to programmatically identify specific error conditions and take appropriate actions.
+          example: ERR:0000
+        message:
+          type: string
+          description: A human-readable message that provides more details about the error condition. This message is intended to be read by developers and can be used for debugging purposes.
+          example: An unexpected error occurred while processing the request.
+        meta:
+          type: object
+          additionalProperties: true
+          description: |
+            Optional unregulated extension for machine-readable context. Lumen does not prescribe its structure. Teams may define custom schemas if needed.
+      additionalProperties: false
+      example:
+        detail: The 'name' field is required and must be a non-empty string.
+        pointer: /data/attributes/name
+        parameter: name
+        header: Authorization
+        code: ERR:0000
+        message: An unexpected error occurred while processing the request.
+        meta:
+          request_id: 65f4ac8b6d4a
+      x-go-type-name: ErrorDetail
+    LpdpProblem:
+      required:
+      - type
+      type: object
+      properties:
+        type:
+          type: string
+          description: |
+            A URI reference that uniquely identifies the problem type only in the context of the provided API. Opposed to the specification in RFC-9457, it is neither recommended to be dereferenceable and point to a human-readable documentation nor globally unique for the problem type.
+          format: uri
+          example: https://server.com/problems/definition
+          default: about:blank
+        title:
+          type: string
+          description: |
+            A short summary of the problem type. Written in English and readable for engineers, usually not suited for non technical stakeholders and not localized.
+          example: Some title for the error situation
+        status:
+          maximum: 600
+          exclusiveMaximum: true
+          minimum: 100
+          type: integer
+          description: |
+            The HTTP status code generated by the origin server for this occurrence of the problem.
+          format: int32
+        detail:
+          type: string
+          description: |
+            A human readable explanation specific to this occurrence of the problem that is helpful to locate the problem and give advice on how to proceed. Written in English and readable for engineers, usually not suited for non technical stakeholders and not localized.
+          example: Some description for the error situation
+        instance:
+          type: string
+          description: |
+            A URI reference that identifies the specific occurrence of the problem, e.g. by adding a fragment identifier or sub-path to the problem type. May be used to locate the root of this problem in the source code.
+          format: uri
+          example: https://server.com/some/uri-reference#specific-occurrence-context
+        errors:
+          type: array
+          description: |
+            Array that describes the details of multiple related errors.  Each member is an object containing "detail" to describe the issue and "pointer" to locate the problem within the request's content using a JSON Pointer.
+          items:
+            $ref: "#/components/schemas/LpdpError"
+      additionalProperties: false
+      example:
+        type: https://server.com/problems/definition
+        title: Validation failed
+        status: 422
+        detail: The request payload contains one or more invalid fields.
+        instance: https://server.com/some/uri-reference#specific-occurrence-context
+        errors:
+        - detail: The 'name' field is required and must be a non-empty string.
+          pointer: /data/attributes/name
+          code: ERR:0000
+          message: An unexpected error occurred while processing the request.
+      x-go-type-name: ProblemDetail
+    Pagination:
+      required:
+      - limit
+      - offset
+      - total
+      type: object
+      properties:
+        limit:
+          maximum: 100
+          minimum: 1
+          type: integer
+          description: The maximum number of items in the response (as set in the query or by default).
+          format: int32
+          default: 25
+        offset:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          description: The offset of the items returned (as set in the query or by default)
+          format: int32
+          default: 0
+        total:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          description: |
+            The total number of items available to return.
+          format: int32
+      example:
+        limit: 25
+        offset: 0
+        total: 240
+    customerNumber:
+      title: Customer Number
+      type: string
+      description: Lumen defined customer ID. Also known as BusOrg number.
+      example: 1-ABCD
+    billingAccountNumber:
+      title: Billing Account Number
+      type: string
+      description: Lumen defined billing account number the application will be making transactions for. A customer number can have many billing account numbers (BANs)
+      example: 1-1ABCDE-F
+    CreateMultiCloudGatewayInterfaceRequest:
+      title: CreateMultiCloudGatewayInterfaceRequest
+      required:
+      - name
+      - term
+      type: object
+      properties:
+        name:
+          type: string
+          description: Customer-provided name for the MCGW service interface
+          example: Production-MCGW-East
+        description:
+          maxLength: 250
+          type: string
+          description: Optional detailed description of the MCGW interface
+          example: Primary production gateway for east region cloud connectivity
+        address_family:
+          type: string
+          description: "IP address family for the MCGW interface (e.g., \"IPV4\")"
+          example: IPV4
+          enum:
+          - IPV4
+        ipv4_address:
+          pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}\\/[0-9]{1,2}$"
+          type: string
+          description: IP address assigned to the MCGW interface
+          format: ipv4-cidr
+          example: 10.0.0.65/29
+        term:
+          $ref: "#/components/schemas/PricingTerm"
+      example:
+        name: Production-MCGW-East
+        description: Primary production gateway for east region cloud connectivity
+        ipv4_address: 10.0.0.65/29
+        address_family: IPV4
+        term: Monthly
+  responses:
+    "400BadRequest":
+      description: Bad Request.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "401Unauthorized":
+      description: Unauthorized.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "403Forbidden":
+      description: Forbidden.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "404NotFound":
+      description: Not Found.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "422UnprocessableEntity":
+      description: Unprocessable entity.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "500InternalServerError":
+      description: Internal server error.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "405MethodNotAllowed":
+      description: Method Not Allowed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "409Conflict":
+      description: Conflict.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "412PreconditionFailed":
+      description: Precondition Failed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+  parameters:
+    CustomerNumberOptional:
+      name: customer_number
+      in: query
+      description: The customer number associated with the request.
+      required: false
+      schema:
+        $ref: "#/components/schemas/customerNumber"
+    BillingAccountNumberOptional:
+      name: billing_account_number
+      in: query
+      description: The billing account number associated with the request.
+      required: false
+      schema:
+        $ref: "#/components/schemas/billingAccountNumber"
+    gatewayId:
+      name: gateway_id
+      in: path
+      description: Unique identifier for the MCGW
+      required: true
+      schema:
+        $ref: "#/components/schemas/McgwEntityId"
+    interfaceId:
+      name: interface_id
+      in: path
+      description: Unique identifier for the Interface
+      required: true
+      schema:
+        $ref: "#/components/schemas/McgwEntityId"
+    sessionId:
+      name: session_id
+      in: path
+      description: Unique identifier for the BGP session
+      required: true
+      schema:
+        $ref: "#/components/schemas/McgwEntityId"
+    staticRouteId:
+      name: static_route_id
+      in: path
+      description: Unique identifier for the static route
+      required: true
+      schema:
+        $ref: "#/components/schemas/McgwEntityId"
+    prefixListId:
+      name: prefix_list_id
+      in: path
+      description: Unique identifier for the prefix list
+      required: true
+      schema:
+        $ref: "#/components/schemas/McgwEntityId"
+      example: 12345678-1234-1234-1234-123456789012
+    resourceId:
+      name: resource_id
+      in: path
+      description: Unique identifier for a Gateway or Interface resource
+      required: true
+      schema:
+        $ref: "#/components/schemas/McgwEntityId"
+    LimitQuery:
+      name: limit
+      in: query
+      description: Maximum number of records to return
+      required: false
+      schema:
+        maximum: 100
+        minimum: 1
+        type: integer
+        format: int32
+        default: 25
+        x-go-name: PaginationLimit
+    OffsetQuery:
+      name: offset
+      in: query
+      description: Number of records to skip for pagination
+      required: false
+      schema:
+        maximum: 1000000
+        minimum: 0
+        type: integer
+        format: int32
+        default: 0
+    All:
+      name: all
+      in: query
+      description: Return all records without pagination
+      required: false
+      schema:
+        type: boolean
+        default: false
+  examples:
+    gateway-tier-price-options:
+      summary: Gateway tier priced options
+      value:
+      - tier: 50G
+        price_monthly: "375.0"
+      - tier: 100G
+        price_monthly: "750.0"
+    interface-price-options:
+      summary: Interface priced options
+      value:
+      - interface: default
+        price_hourly: "0.20"
+        price_monthly: "100.80"
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://api-test.lumen.com/oauth/v2/token
+          scopes: {}
+      x-auth-provider: apigee
+x-visibility: external

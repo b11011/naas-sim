@@ -1,0 +1,3783 @@
+openapi: 3.0.2
+info:
+  title: Ethernet Fabric Connect API
+  description: <p>Ethernet Fabric Connect APIs enable customers to connect clouds or fabric ports to a Multi-Cloud Gateway interface. Ethernet Fabric Connect works with the following cloud service providers 
+    <ul>
+      <li>Amazon Web Services (AWS)</li>
+      <li>Google Cloud Platform (GCP)</li>
+      <li>Microsoft Azure</li>
+      <li>Oracle Cloud Infrastructure (OCI)</li>
+    </p>
+  version: 1.0.0
+servers:
+- url: https://api.lumen.com/fabric/v1
+  description: Production server
+security:
+- OAuth2: []
+tags:
+- name: Connections
+  description: Manage connections.
+- name: AWS
+  description: Manage Amazon Web Services connections.
+- name: Azure
+  description: Manage Azure connections.
+- name: GCP
+  description: Manage Google Cloud Platform connections.
+- name: OCI
+  description: Manage Oracle Cloud Infrastructure connections.
+- name: Point-to-point
+  description: Manage point-to-point virtual connections.
+paths:
+  /connections/virtual/p2p:
+    get:
+      tags:
+      - Point-to-point
+      summary: Get point-to-point virtual connections.
+      description: Retrieve a list of all point-to-point virtual connections between Multi-Cloud Gateways.
+      operationId: listP2pVirtualConnections
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Option to return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK. The request retrieves a list of point-to-point virtual connections.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListP2PVirtualConnectionResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    post:
+      tags:
+      - Point-to-point
+      summary: Create a point-to-point virtual connection.
+      description: Create a point-to-point virtual connection between two Multi-Cloud Gateways.
+      operationId: createP2PVirtualConnection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateP2PVirtualConnection"
+        required: true
+      responses:
+        "202":
+          description: Accepted. The request creates the point-to-point virtual connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/P2PVirtualConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/virtual/p2p/{connection_id}:
+    get:
+      tags:
+      - Point-to-point
+      summary: Get point-to-point virtual connection.
+      description: Retrieves details about a specified point-to-point virtual connection.
+      operationId: p2PVirtualConnectionDetails
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: connection_id
+        in: path
+        description: ID of the point-to-point virtual connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK. The request retrieves details about the specified point-to-point virtual connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/P2PVirtualConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      tags:
+      - Point-to-point
+      summary: Delete point-to-point virtual connection.
+      description: Delete a point-to-point virtual connection between two Multi-Cloud Gateways.
+      operationId: deleteP2PVirtualConnection
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier for the connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "204":
+          description: Connection deleted successfully
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "405":
+          $ref: "#/components/responses/405MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    patch:
+      tags:
+      - Point-to-point
+      summary: Update point-to-point virtual connection.
+      description: Update the name, description, and/or bandwidth of a specified point-to-point virtual connection between two Multi-Cloud Gateways.
+      operationId: updateP2PVirtualConnection
+      parameters:
+      - name: connection_id
+        in: path
+        description: ID of the point-to-point virtual connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConnection"
+        required: true
+      responses:
+        "200":
+          description: OK. The request updates the point-to-point virtual connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/P2PVirtualConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections:
+    get:
+      tags:
+      - Connections
+      summary: Get connections.
+      description: Retrieve details for all connections.
+      operationId: listConnectionSummaries
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Option to return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK. The request retrieves connection details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionList"
+              examples:
+                default:
+                  $ref: "#/components/examples/connections-list-200"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/{connection_id}:
+    get:
+      tags:
+      - Connections
+      summary: Get connection details.
+      description: Retrieve details for a specified connection.
+      operationId: connectionSummaryDetails
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: connection_id
+        in: path
+        description: Unique identifier of the connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK. The request retrieves details for the specified connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+              examples:
+                aws_connection:
+                  $ref: "#/components/examples/connection-details-aws"
+                azure_connection:
+                  $ref: "#/components/examples/connection-details-azure"
+                gcp_connection:
+                  $ref: "#/components/examples/connection-details-gcp"
+                oci_connection:
+                  $ref: "#/components/examples/connection-details-oci"
+                p2p_connection:
+                  $ref: "#/components/examples/connection-details-p2p"
+                ilm_connection:
+                  $ref: "#/components/examples/connection-details-ilm"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/{connection_id}/bandwidths:
+    get:
+      tags:
+      - Connections
+      summary: Get bandwidths.
+      description: Retrieve a detailed list of available bandwidth options for a specified connection.
+      operationId: listBandwidthOptionsForExistingConnection
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier for the connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK. The request retrieves the bandwidth options for the connection.
+          content:
+            application/json:
+              schema:
+                type: array
+                description: List of priced options for connection bandwidths
+                items:
+                  $ref: "#/components/schemas/ConnectionBandwidthPriceGroup"
+              example:
+              - bandwidth: 50
+                options:
+                - category: datacenter
+                  class_of_service: basic
+                  price_hourly: "0.062500"
+                  price_monthly: "37.500000"
+              - bandwidth: 1000
+                options:
+                - category: metro
+                  class_of_service: basic
+                  price_hourly: "0.625000"
+                  price_monthly: "375.000000"
+                - category: longhaul
+                  class_of_service: dedicated
+                  price_hourly: "0.704200"
+                  price_monthly: "422.520000"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /billing/{connection_id}:
+    get:
+      tags:
+      - Connections
+      summary: Get connection pricing.
+      description: Retrieves the effective price of a specified connection.
+      operationId: connectionBillingDetails
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier for the connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK. The request retrieves the connection pricing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EffectivePrice"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/cloud/hosted/aws:
+    get:
+      tags:
+      - AWS
+      summary: Get AWS connections.
+      description: Retrieve a detailed list of your connections between AWS cloud and Multi-Cloud Gateway.
+      operationId: listHostedAWSConnections
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Option to return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK. The request retrieves a list of AWS to Multi-Cloud Gateway connections.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListHostedAwsConnectionResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    post:
+      tags:
+      - AWS
+      summary: Create AWS connection.
+      description: Create a connection between an AWS cloud and Multi-Cloud Gateway.
+      operationId: createHostedAWSConnection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHostedAwsConnection"
+            examples:
+              source_endpoint_mcgw:
+                $ref: "#/components/examples/create-hosted-aws-source-endpoint-mcgw"
+              source_endpoint_port:
+                $ref: "#/components/examples/create-hosted-aws-source-endpoint-port"
+        required: true
+      responses:
+        "202":
+          description: Accepted. The request creates the connection between the AWS cloud and Multi-Cloud Gateway.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedAwsConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/cloud/hosted/aws/{connection_id}:
+    get:
+      tags:
+      - AWS
+      summary: Get AWS connection details.
+      description: Retrieve details about a specified AWS cloud and Multi-Cloud Gateway connection.
+      operationId: hostedAwsConnectionDetails
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: connection_id
+        in: path
+        description: Unique identifier of the AWS connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK. The request retrieves details about the specified connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedAwsConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      tags:
+      - AWS
+      summary: Delete AWS connection.
+      description: Delete a specified AWS and Multi-Cloud Gateway connection.
+      operationId: deleteHostedAwsConnection
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier of the AWS connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "204":
+          description: No Content. The request deletes the specified AWS and Multi-Cloud connection.
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    patch:
+      tags:
+      - AWS
+      summary: Update AWS connection.
+      description: Update a specified AWS and Multi-Cloud Gateway connection.
+      operationId: updateHostedAwsConnection
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier of the AWS connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateHostedAwsConnection"
+        required: true
+      responses:
+        "200":
+          description: OK. The request updates the AWS connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedAwsConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/cloud/hosted/gcp:
+    get:
+      tags:
+      - GCP
+      summary: Get GCP connections.
+      description: Retrieve a detailed list of GCP to Multi-Cloud Gateway connections.
+      operationId: listHostedGcpConnections
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Option to return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK. The request retrieves a detailed list of GCP to Multi-Cloud Gateway connections.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListHostedGcpConnectionResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    post:
+      tags:
+      - GCP
+      summary: Create GCP connection.
+      description: Create a connection between GCP and Multi-Cloud Gateway.
+      operationId: createHostedGcpConnection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHostedGcpConnection"
+            examples:
+              source_endpoint_mcgw:
+                $ref: "#/components/examples/create-hosted-gcp-source-endpoint-mcgw"
+              source_endpoint_port:
+                $ref: "#/components/examples/create-hosted-gcp-source-endpoint-port"
+        required: true
+      responses:
+        "202":
+          description: Accepted. The request creates the GCP to Multi-Cloud Gateway connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedGcpConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/cloud/hosted/gcp/{connection_id}:
+    get:
+      tags:
+      - GCP
+      summary: Get GCP connection details.
+      description: Retrieve details about a specified GCP to Multi-Cloud Gateway connection.
+      operationId: hostedGcpConnectionDetails
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: connection_id
+        in: path
+        description: Unique identifier of the GCP to Multi-Cloud Gateway connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK. The request retrieves details about the specified GCP to Multi-Cloud Gateway connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedGcpConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      tags:
+      - GCP
+      summary: Delete GCP connection.
+      description: Delete a specified GCP to Multi-Cloud Gateway connection.
+      operationId: deleteHostedGcpConnection
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier of the GCP connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "204":
+          description: No Content. The request deletes the specified GCP connection.
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    patch:
+      tags:
+      - GCP
+      summary: Update GCP connection.
+      description: Update a connection between GCP and Multi-Cloud Gateway.
+      operationId: updateConnectionMcgwGcp
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier of the GCP connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConnection"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedGcpConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/cloud/hosted/azure:
+    get:
+      tags:
+      - Azure
+      summary: Get Azure connections.
+      description: Retrieve a detailed list of Azure to Multi-Cloud Gateway connections.
+      operationId: listHostedAzureConnections
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Option to return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK. The request retrieves a detailed list of Azure connections.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListHostedAzureConnectionResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    post:
+      tags:
+      - Azure
+      summary: Create Azure connection.
+      description: Create an Azure to Multi-Cloud Gateway connection.
+      operationId: createHostedAzureConnection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHostedAzureConnection"
+            examples:
+              source_endpoint_mcgw:
+                $ref: "#/components/examples/create-hosted-azure-source-endpoint-mcgw"
+              source_endpoint_port:
+                $ref: "#/components/examples/create-hosted-azure-source-endpoint-port"
+        required: true
+      responses:
+        "202":
+          description: Accepted. The request creates the Azure connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedAzureConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/cloud/hosted/azure/{connection_id}:
+    get:
+      tags:
+      - Azure
+      summary: Get Azure connection details.
+      description: Retrieve details for a specified Azure to Multi-Cloud Gateway connection.
+      operationId: hostedAzureConnectionDetails
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: connection_id
+        in: path
+        description: Unique identifier of the Azure connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK. The request retrieves details for the specified Azure connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedAzureConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      tags:
+      - Azure
+      summary: Delete Azure connection.
+      description: Delete a specified Azure to Multi-Cloud Gateway connection.
+      operationId: deleteHostedAzureConnection
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier of the Azure connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "204":
+          description: No Content. The request deletes the specified Azure connection.
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    patch:
+      tags:
+      - Azure
+      summary: Update Azure connection.
+      description: Update a specified Azure to Multi-Cloud Gateway connection.
+      operationId: updateHostedAzureConnection
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier of the connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConnection"
+        required: true
+      responses:
+        "200":
+          description: OK. The request updates the specified connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedAzureConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/cloud/hosted/oci:
+    get:
+      tags:
+      - OCI
+      summary: Get OCI connections.
+      description: Retrieve a detailed list of OCI to Multi-Cloud Gateway connections.
+      operationId: listHostedOciConnections
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: limit
+        in: query
+        description: Maximum number of records to return.
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          format: int32
+          default: 25
+          x-go-name: PaginationLimit
+      - name: offset
+        in: query
+        description: Number of records to skip for pagination.
+        required: false
+        schema:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          format: int32
+          default: 0
+      - name: all
+        in: query
+        description: Option to return all records without pagination.
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListHostedOciConnectionResponse"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    post:
+      tags:
+      - OCI
+      summary: Create OCI connection.
+      description: Create an OCI to Multi-Cloud Gateway connection.
+      operationId: createHostedOciConnection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHostedOciConnection"
+            examples:
+              source_endpoint_mcgw:
+                $ref: "#/components/examples/create-hosted-oci-source-endpoint-mcgw"
+              source_endpoint_port:
+                $ref: "#/components/examples/create-hosted-oci-source-endpoint-port"
+        required: true
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedOciConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+  /connections/cloud/hosted/oci/{connection_id}:
+    get:
+      tags:
+      - OCI
+      summary: Get OCI connection details.
+      description: Retrieve details about a specified OCI to Multi-Cloud Gateway connection.
+      operationId: hostedOciConnectionDetails
+      parameters:
+      - name: customer_number
+        in: query
+        description: Customer number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/customerNumber"
+      - name: billing_account_number
+        in: query
+        description: Billing account number.
+        required: false
+        schema:
+          $ref: "#/components/schemas/billingAccountNumber"
+      - name: connection_id
+        in: path
+        description: Unique identifier of the Oracle connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "200":
+          description: OK. The request retrieves details about the specified OCI to Multi-Cloud Gateway connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedOciConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    delete:
+      tags:
+      - OCI
+      summary: Delete OCI connection.
+      description: Delete a specified OCI to Multi-Cloud Gateway connection.
+      operationId: deleteHostedOciConnection
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier of the Oracle connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      responses:
+        "204":
+          description: No Content. The request deletes the OCI connection.
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+    patch:
+      tags:
+      - OCI
+      summary: Update OCI connection.
+      description: Update a specified OCI to Multi-Cloud Gateway connection.
+      operationId: updateHostedOciConnection
+      parameters:
+      - name: connection_id
+        in: path
+        description: Unique identifier of the connection.
+        required: true
+        schema:
+          $ref: "#/components/schemas/McgwEntityId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConnection"
+        required: true
+      responses:
+        "200":
+          description: OK. The request updates the specified Oracle connection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedOciConnection"
+        "400":
+          $ref: "#/components/responses/400BadRequest"
+        "401":
+          $ref: "#/components/responses/401Unauthorized"
+        "403":
+          $ref: "#/components/responses/403Forbidden"
+        "404":
+          $ref: "#/components/responses/404NotFound"
+        "422":
+          $ref: "#/components/responses/422UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/500InternalServerError"
+components:
+  schemas:
+    Gateway:
+      required:
+      - gateway_id
+      type: object
+      properties:
+        gateway_id:
+          $ref: "#/components/schemas/McgwEntityId"
+        name:
+          type: string
+          description: Human-readable gateway name
+          example: MCGW-East
+      example:
+        gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+        name: MCGW-East
+    Interface:
+      required:
+      - interface_id
+      type: object
+      properties:
+        interface_id:
+          $ref: "#/components/schemas/McgwEntityId"
+        name:
+          type: string
+          description: Human-readable interface name
+          example: Primary Interface
+      example:
+        interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+        name: Primary Interface
+    HostedEndpoint:
+      type: object
+      example:
+        gateway:
+          gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+          name: MCGW-East
+        interface:
+          interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+          name: Primary Interface
+        ipv4_address: 10.10.0.1/30
+      oneOf:
+      - $ref: "#/components/schemas/GatewayEndpoint"
+      - $ref: "#/components/schemas/Port"
+    McgwEntityId:
+      pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      type: string
+      description: Unique identifier for the MCGW entities formatted as a UUID (Universally Unique Identifier).
+      example: 123e4567-e89b-12d3-a456-426614174000
+    Connection:
+      type: object
+      example:
+        connection_id: 7b21e3a1-3f6b-4d73-8fd4-73d07efdf50b
+        state: active
+        type: mcgw.aws
+        name: Hosted AWS Connection
+        source_endpoint:
+          gateway:
+            gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+            name: MCGW-East
+          interface:
+            interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+            name: Primary Interface
+          ipv4_address: 10.10.0.1/30
+        dest_endpoint:
+          on_ramp: aws-us-east-1
+          vlan: 200
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+      allOf:
+      - $ref: "#/components/schemas/BaseConnectionResponse"
+      - oneOf:
+        - $ref: "#/components/schemas/HostedAwsConnection"
+        - $ref: "#/components/schemas/HostedAzureConnection"
+        - $ref: "#/components/schemas/HostedGcpConnection"
+        - $ref: "#/components/schemas/HostedOciConnection"
+        - $ref: "#/components/schemas/P2PVirtualConnection"
+        - $ref: "#/components/schemas/LciConnection"
+    ConnectionList:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of connections
+          items:
+            $ref: "#/components/schemas/Connection"
+      description: Paginated list of connections.
+      example:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 1
+        data:
+        - connection_id: 7b21e3a1-3f6b-4d73-8fd4-73d07efdf50b
+          state: active
+          type: mcgw.aws
+          name: Hosted AWS Connection
+          source_endpoint:
+            gateway:
+              gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+              name: MCGW-East
+            interface:
+              interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+              name: Primary Interface
+            ipv4_address: 10.10.0.1/30
+          dest_endpoint:
+            on_ramp: aws-us-east-1
+            vlan: 200
+          bandwidth: 1000
+          term: Monthly
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+    ListP2PVirtualConnectionResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of point-to-point virtual connections
+          items:
+            $ref: "#/components/schemas/P2PVirtualConnection"
+      description: Paginated list of point-to-point virtual connections
+      example:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 1
+        data:
+        - connection_id: 55555555-5555-4555-8555-555555555555
+          state: active
+          type: port.port
+          name: P2P Virtual Connection
+          source_endpoint:
+            service_id: TN/KXFN/000002/LVLC
+            ce_vlan: 240
+          dest_endpoint:
+            service_id: TN/KXFN/000003/LVLC
+            ce_vlan: 241
+          bandwidth: 500
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+    ListHostedAwsConnectionResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of AWS hosted connections.
+          items:
+            $ref: "#/components/schemas/HostedAwsConnection"
+      description: Paginated list of AWS hosted connections
+      example:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 1
+        data:
+        - connection_id: 11111111-1111-4111-8111-111111111111
+          state: active
+          type: mcgw.aws
+          name: Hosted AWS Connection
+          source_endpoint:
+            gateway:
+              gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+              name: MCGW-East
+            interface:
+              interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+              name: Primary Interface
+            ipv4_address: 10.10.0.1/30
+          dest_endpoint:
+            on_ramp: aws-us-east-1
+            vlan: 200
+          bandwidth: 1000
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+    ListHostedGcpConnectionResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of hosted GCP connections
+          items:
+            $ref: "#/components/schemas/HostedGcpConnection"
+      description: Paginated list of hosted GCP connections.
+      example:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 1
+        data:
+        - connection_id: 33333333-3333-4333-8333-333333333333
+          state: active
+          type: mcgw.gcp
+          name: Hosted GCP Connection
+          source_endpoint:
+            gateway:
+              gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+              name: MCGW-West
+            interface:
+              interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+              name: Primary Interface
+            ipv4_address: 10.10.0.1/30
+          dest_endpoint:
+            on_ramp: gcp-us-central1
+            vlan_attachment_name: vlan-attachment-12345
+          bandwidth: 1000
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+    ListHostedAzureConnectionResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of hosted Azure connections.
+          items:
+            $ref: "#/components/schemas/HostedAzureConnection"
+      description: Paginated list of hosted Azure connections
+      example:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 1
+        data:
+        - connection_id: 22222222-2222-4222-8222-222222222222
+          state: active
+          type: mcgw.azure
+          name: Hosted Azure Connection
+          source_endpoint:
+            gateway:
+              gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+              name: MCGW-Central
+            interface:
+              interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+              name: Primary Interface
+            ipv4_address: 10.10.0.1/30
+          dest_endpoint:
+            on_ramp: azure-east-us
+            vlan: 220
+          bandwidth: 1000
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+    ListHostedOciConnectionResponse:
+      required:
+      - data
+      - pagination
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        data:
+          type: array
+          description: List of hosted OCI connections.
+          items:
+            $ref: "#/components/schemas/HostedOciConnection"
+      description: Paginated list of hosted OCI connections
+      example:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 1
+        data:
+        - connection_id: 44444444-4444-4444-8444-444444444444
+          state: active
+          type: mcgw.oci
+          name: Hosted OCI Connection
+          source_endpoint:
+            gateway:
+              gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+              name: MCGW-East
+            interface:
+              interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+              name: Primary Interface
+            ipv4_address: 10.10.0.1/30
+          dest_endpoint:
+            description: OCI virtual circuit
+            on_ramp: oci-phx
+            vlan: 230
+            port: Port-1
+          bandwidth: 1000
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+    ConnectionBandwidth:
+      type: integer
+      description: Bandwidth of the connection in Megabits per second (Mbps).
+      example: 5000
+      enum:
+      - 10
+      - 20
+      - 50
+      - 100
+      - 200
+      - 300
+      - 400
+      - 500
+      - 1000
+      - 2000
+      - 3000
+      - 5000
+      - 10000
+      - 15000
+      - 20000
+      - 25000
+      - 30000
+      - 40000
+      - 50000
+      - 60000
+      - 70000
+      - 80000
+      - 90000
+      - 100000
+    UpdateConnection:
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+          description: Name of the connection
+          example: Connection 1
+        description:
+          type: string
+          description: Description of the connection
+          example: Primary connection
+        bandwidth:
+          $ref: "#/components/schemas/ConnectionBandwidth"
+      description: Patch Connection
+      example:
+        name: Virtual Point-to-Point Connection
+        description: Updated connection description
+        bandwidth: 500
+    EffectivePrice:
+      required:
+      - effective_at
+      - period
+      - rate
+      type: object
+      properties:
+        period:
+          $ref: "#/components/schemas/PricingTerm"
+        rate:
+          pattern: "^(0|[1-9]\\d*)(\\.\\d{1,6})?$"
+          type: string
+          description: Decimal monetary amount with up to 6 fractional digits.
+          example: "123.456789"
+        effective_at:
+          type: string
+          description: "RFC 3339 timestamp when this price became effective (captured at provisioning or tier change). Immutable until replaced (e.g., gateway tier PATCH)."
+          format: date-time
+          readOnly: true
+        terminated_at:
+          type: string
+          description: RFC 3339 timestamp when this price was terminated.
+          format: date-time
+          readOnly: true
+      additionalProperties: true
+      example:
+        period: Monthly
+        rate: "375.000000"
+        effective_at: 2024-01-01T12:00:00Z
+    UpdateHostedAwsConnection:
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+          description: Name of the connection
+          example: My Connection
+        description:
+          type: string
+          description: Description of the connection
+      additionalProperties: false
+      description: |
+        Partial update body for **PATCH** `/connections/cloud/hosted/aws/{connection_id}`.
+        Only **name** and **description** are supported; bandwidth is not modifiable for AWS hosted connections.
+      example:
+        name: Hosted AWS Connection Updated
+        description: Updated hosted AWS connection description
+    PricingTerm:
+      type: string
+      description: Pricing Term
+      example: Hourly
+      enum:
+      - Hourly
+      - Monthly
+      default: Monthly
+    ConnectionState:
+      type: string
+      description: Connection state of the connection
+      example: active
+      enum:
+      - active
+      - disabled
+      - deleting
+      - provisioning
+      - updating
+      - resetting
+    BaseConnectionResponse:
+      required:
+      - connection_id
+      - name
+      - state
+      - type
+      type: object
+      properties:
+        connection_id:
+          type: string
+          description: Unique identifier for the connection
+          example: 341f2a21-8098-4538-b09c-b7de694caf4b
+        state:
+          $ref: "#/components/schemas/ConnectionState"
+        name:
+          maxLength: 255
+          type: string
+          description: Name of the connection
+          example: Hosted AWS Connection
+        type:
+          $ref: "#/components/schemas/ConnectionType"
+      example:
+        connection_id: 341f2a21-8098-4538-b09c-b7de694caf4b
+        state: active
+        type: mcgw.aws
+        name: Hosted AWS Connection
+    Port:
+      required:
+      - service_id
+      type: object
+      properties:
+        service_id:
+          $ref: "#/components/schemas/PortServiceId"
+        ce_vlan:
+          $ref: "#/components/schemas/CeVlan"
+      description: Lumen Multiplexed Port
+      example:
+        service_id: TN/KXFN/000000/LVLC
+        ce_vlan: 200
+    GatewayEndpoint:
+      required:
+      - gateway
+      - interface
+      type: object
+      properties:
+        gateway:
+          $ref: "#/components/schemas/Gateway"
+        interface:
+          $ref: "#/components/schemas/Interface"
+        ipv4_address:
+          pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}\\/[0-9]{1,2}$"
+          type: string
+          description: IPv4 address for the interface
+          example: 192.168.1.0/24
+        address_family:
+          type: string
+          description: IP address family
+          example: ipv4
+          enum:
+          - ipv4
+          default: ipv4
+      description: Multicloud Gateway
+      example:
+        gateway:
+          gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+          name: MCGW-East
+        interface:
+          interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+          name: Primary Interface
+        ipv4_address: 10.10.0.1/30
+    IlmEndpoint:
+      type: object
+      properties:
+        on_ramp:
+          type: string
+        provider:
+          type: string
+      description: Connection termination on ILM
+      example:
+        on_ramp: ilm-denver
+        provider: ilm
+    CreateAWSEndpoint:
+      required:
+      - aws_account_id
+      - on_ramp
+      type: object
+      properties:
+        aws_account_id:
+          type: string
+        on_ramp:
+          type: string
+      description: Connection termination on AWS
+      example:
+        aws_account_id: "123456789012"
+        on_ramp: aws-us-east-1
+    AWSEndpoint:
+      required:
+      - on_ramp
+      type: object
+      properties:
+        description:
+          type: string
+        on_ramp:
+          type: string
+          example: XY123
+        vlan:
+          $ref: "#/components/schemas/Vlan"
+        cloud_connection_id:
+          type: string
+      description: Connection termination on AWS
+      example:
+        description: AWS endpoint
+        on_ramp: aws-us-east-1
+        vlan: 200
+    CreateGcpEndpoint:
+      required:
+      - on_ramp
+      - pairing_key
+      type: object
+      properties:
+        on_ramp:
+          type: string
+        pairing_key:
+          type: string
+          description: GCP pairing key for the VLAN attachment
+          example: pairing-key-12345
+        vlan_attachment_name:
+          type: string
+          description: Name of the VLAN attachment in GCP
+          example: vlan-attachment-12345
+      description: Connection termination on GCP
+      example:
+        on_ramp: gcp-us-central1
+        pairing_key: 4f9b07c3-df49-4cee-90bd-a302e5a89804/us-region1/2
+        vlan_attachment_name: vlan-attachment-12345
+    GCPEndpoint:
+      required:
+      - on_ramp
+      type: object
+      properties:
+        on_ramp:
+          type: string
+          example: XY123
+        vlan_attachment_name:
+          type: string
+          description: Name of the VLAN attachment in GCP
+          example: vlan-attachment-12345
+      description: Connection termination on GCP
+      example:
+        on_ramp: gcp-us-central1
+        vlan_attachment_name: vlan-attachment-12345
+    CreateAzureEndpoint:
+      required:
+      - on_ramp
+      - service_key
+      type: object
+      properties:
+        description:
+          type: string
+        on_ramp:
+          type: string
+        service_key:
+          type: string
+          description: Service key for the Azure connection
+          example: serveice-key-12345
+        vlan:
+          $ref: "#/components/schemas/Vlan"
+      example:
+        description: Azure ExpressRoute
+        on_ramp: azure-east-us
+        service_key: c09e556d-c19b-4273-8cc1-15adfb94abb6
+        vlan: 220
+    AzureEndpoint:
+      required:
+      - on_ramp
+      type: object
+      properties:
+        description:
+          type: string
+        on_ramp:
+          type: string
+          example: XY123
+        vlan:
+          $ref: "#/components/schemas/Vlan"
+      example:
+        description: Azure endpoint
+        on_ramp: azure-east-us
+        vlan: 220
+    CreateHostedAwsConnection:
+      required:
+      - bandwidth
+      - billing_account_number
+      - customer_number
+      - dest_endpoint
+      - name
+      - source_endpoint
+      - term
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+          description: Name of the connection
+          example: Hosted AWS Connection
+        description:
+          type: string
+          description: Description of the connection
+          example: AWS to MCGW primary connection
+        source_endpoint:
+          $ref: "#/components/schemas/HostedEndpoint"
+        dest_endpoint:
+          $ref: "#/components/schemas/CreateAWSEndpoint"
+        bandwidth:
+          $ref: "#/components/schemas/ConnectionBandwidth"
+        term:
+          $ref: "#/components/schemas/PricingTerm"
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+        class_of_service:
+          $ref: "#/components/schemas/ClassOfService"
+      description: Connection
+      example:
+        name: Hosted AWS Connection
+        description: AWS destination from MCGW interface
+        source_endpoint:
+          gateway:
+            gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+          interface:
+            interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+          ipv4_address: 10.10.0.1/30
+        dest_endpoint:
+          aws_account_id: "123456789012"
+          on_ramp: aws-us-east-1
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    LciConnection:
+      type: object
+      example:
+        connection_id: 7b21e3a1-3f6b-4d73-8fd4-73d07efdf50b
+        state: active
+        type: mcgw.port
+        name: LCI AWS Primary
+        source_endpoint:
+          gateway:
+            gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+            name: MCGW-East
+          interface:
+            interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+            name: Primary Interface
+          ipv4_address: 10.10.0.1/30
+        dest_endpoint:
+          on_ramp: aws-us-east-1
+          provider: aws-lci
+        bandwidth: 1000
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+      allOf:
+      - $ref: "#/components/schemas/BaseConnectionResponse"
+      - required:
+        - bandwidth
+        - billing_account_number
+        - customer_number
+        - dest_endpoint
+        - name
+        - source_endpoint
+        type: object
+        properties:
+          name:
+            maxLength: 255
+            type: string
+            description: Name of the connection
+            example: ILM to MCGW Connection
+          description:
+            type: string
+            description: Description of the connection
+          source_endpoint:
+            $ref: "#/components/schemas/HostedEndpoint"
+          dest_endpoint:
+            $ref: "#/components/schemas/IlmEndpoint"
+          bandwidth:
+            $ref: "#/components/schemas/ConnectionBandwidth"
+          term:
+            $ref: "#/components/schemas/PricingTerm"
+          customer_number:
+            $ref: "#/components/schemas/customerNumber"
+          billing_account_number:
+            $ref: "#/components/schemas/billingAccountNumber"
+          created_at:
+            $ref: "#/components/schemas/CreatedAt"
+          created_by:
+            $ref: "#/components/schemas/CreatedBy"
+          updated_at:
+            $ref: "#/components/schemas/UpdatedAt"
+          updated_by:
+            $ref: "#/components/schemas/UpdatedBy"
+        additionalProperties: true
+        description: Connection
+    HostedAwsConnection:
+      type: object
+      example:
+        connection_id: 11111111-1111-4111-8111-111111111111
+        state: active
+        type: mcgw.aws
+        name: Hosted AWS Connection
+        source_endpoint:
+          gateway:
+            gateway_id: bbbbbbb1-1111-4111-8111-111111111111
+            name: MCGW-East
+          interface:
+            interface_id: aaaaaaa1-1111-4111-8111-111111111111
+            name: Primary Interface
+          ipv4_address: 10.0.0.1/30
+        dest_endpoint:
+          on_ramp: aws-us-east-1
+          vlan: 200
+        bandwidth: 1000
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+      allOf:
+      - $ref: "#/components/schemas/BaseConnectionResponse"
+      - required:
+        - bandwidth
+        - billing_account_number
+        - customer_number
+        - dest_endpoint
+        - name
+        - source_endpoint
+        type: object
+        properties:
+          type:
+            allOf:
+            - $ref: "#/components/schemas/ConnectionType"
+            - type: string
+              enum:
+              - mcgw.aws
+          name:
+            maxLength: 255
+            type: string
+            description: Name of the connection
+            example: Hosted AWS Connection
+          description:
+            type: string
+            description: Description of the connection
+          source_endpoint:
+            $ref: "#/components/schemas/HostedEndpoint"
+          dest_endpoint:
+            $ref: "#/components/schemas/AWSEndpoint"
+          bandwidth:
+            $ref: "#/components/schemas/ConnectionBandwidth"
+          term:
+            $ref: "#/components/schemas/PricingTerm"
+          customer_number:
+            $ref: "#/components/schemas/customerNumber"
+          billing_account_number:
+            $ref: "#/components/schemas/billingAccountNumber"
+          created_at:
+            $ref: "#/components/schemas/CreatedAt"
+          created_by:
+            $ref: "#/components/schemas/CreatedBy"
+          updated_at:
+            $ref: "#/components/schemas/UpdatedAt"
+          updated_by:
+            $ref: "#/components/schemas/UpdatedBy"
+          class_of_service:
+            $ref: "#/components/schemas/ClassOfService"
+        additionalProperties: true
+        description: Connection
+    CreateHostedGcpConnection:
+      required:
+      - bandwidth
+      - billing_account_number
+      - customer_number
+      - dest_endpoint
+      - name
+      - source_endpoint
+      - term
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+          description: Name of the connection
+          example: Hosted GCP Connection
+        description:
+          type: string
+          description: Description of the connection
+        source_endpoint:
+          $ref: "#/components/schemas/HostedEndpoint"
+        dest_endpoint:
+          $ref: "#/components/schemas/CreateGcpEndpoint"
+        bandwidth:
+          $ref: "#/components/schemas/ConnectionBandwidth"
+        term:
+          $ref: "#/components/schemas/PricingTerm"
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+        class_of_service:
+          $ref: "#/components/schemas/ClassOfService"
+      description: Connection
+      example:
+        name: Hosted GCP Connection
+        description: GCP destination from MCGW interface
+        source_endpoint:
+          gateway:
+            gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+          interface:
+            interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+          ipv4_address: 10.10.0.1/30
+        dest_endpoint:
+          on_ramp: gcp-us-central1
+          pairing_key: 4f9b07c3-df49-4cee-90bd-a302e5a89804/us-region1/2
+          vlan_attachment_name: vlan-attachment-12345
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    HostedGcpConnection:
+      type: object
+      example:
+        connection_id: 33333333-3333-4333-8333-333333333333
+        state: active
+        type: mcgw.gcp
+        name: Hosted GCP Connection
+        source_endpoint:
+          gateway:
+            gateway_id: bbbbbbb3-3333-4333-8333-333333333333
+            name: MCGW-West
+          interface:
+            interface_id: aaaaaaa3-3333-4333-8333-333333333333
+            name: Primary Interface
+          ipv4_address: 10.0.2.1/30
+        dest_endpoint:
+          on_ramp: gcp-us-central1
+          vlan_attachment_name: vlan-attachment-12345
+        bandwidth: 1000
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+      allOf:
+      - $ref: "#/components/schemas/BaseConnectionResponse"
+      - required:
+        - bandwidth
+        - billing_account_number
+        - customer_number
+        - dest_endpoint
+        - name
+        - source_endpoint
+        type: object
+        properties:
+          type:
+            allOf:
+            - $ref: "#/components/schemas/ConnectionType"
+            - type: string
+              enum:
+              - mcgw.gcp
+          name:
+            maxLength: 255
+            type: string
+            description: Name of the connection
+            example: Hosted GCP Connection
+          description:
+            type: string
+            description: Description of the connection
+          source_endpoint:
+            $ref: "#/components/schemas/HostedEndpoint"
+          dest_endpoint:
+            $ref: "#/components/schemas/GCPEndpoint"
+          bandwidth:
+            $ref: "#/components/schemas/ConnectionBandwidth"
+          term:
+            $ref: "#/components/schemas/PricingTerm"
+          customer_number:
+            $ref: "#/components/schemas/customerNumber"
+          billing_account_number:
+            $ref: "#/components/schemas/billingAccountNumber"
+          created_at:
+            $ref: "#/components/schemas/CreatedAt"
+          created_by:
+            $ref: "#/components/schemas/CreatedBy"
+          updated_at:
+            $ref: "#/components/schemas/UpdatedAt"
+          updated_by:
+            $ref: "#/components/schemas/UpdatedBy"
+          class_of_service:
+            $ref: "#/components/schemas/ClassOfService"
+        additionalProperties: true
+        description: Connection Multicloud gateway to GCP
+    CreateHostedAzureConnection:
+      required:
+      - bandwidth
+      - billing_account_number
+      - customer_number
+      - dest_endpoint
+      - name
+      - source_endpoint
+      - term
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+          description: Name of the connection
+          example: Hosted Azure Connection
+        description:
+          type: string
+          description: Description of the connection
+        source_endpoint:
+          $ref: "#/components/schemas/HostedEndpoint"
+        dest_endpoint:
+          $ref: "#/components/schemas/CreateAzureEndpoint"
+        bandwidth:
+          $ref: "#/components/schemas/ConnectionBandwidth"
+        term:
+          $ref: "#/components/schemas/PricingTerm"
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+        class_of_service:
+          $ref: "#/components/schemas/ClassOfService"
+      description: Connection
+      example:
+        name: Hosted Azure Connection
+        description: Azure destination from MCGW interface
+        source_endpoint:
+          gateway:
+            gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+          interface:
+            interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+          ipv4_address: 10.10.0.1/30
+        dest_endpoint:
+          on_ramp: azure-east-us
+          service_key: c09e556d-c19b-4273-8cc1-15adfb94abb6
+          vlan: 220
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    HostedAzureConnection:
+      type: object
+      example:
+        connection_id: 22222222-2222-4222-8222-222222222222
+        state: active
+        type: mcgw.azure
+        name: Hosted Azure Connection
+        source_endpoint:
+          gateway:
+            gateway_id: bbbbbbb2-2222-4222-8222-222222222222
+            name: MCGW-Central
+          interface:
+            interface_id: aaaaaaa2-2222-4222-8222-222222222222
+            name: Primary Interface
+          ipv4_address: 10.0.1.1/30
+        dest_endpoint:
+          on_ramp: azure-east-us
+          vlan: 220
+        bandwidth: 1000
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+      allOf:
+      - $ref: "#/components/schemas/BaseConnectionResponse"
+      - required:
+        - bandwidth
+        - billing_account_number
+        - customer_number
+        - dest_endpoint
+        - name
+        - source_endpoint
+        type: object
+        properties:
+          type:
+            allOf:
+            - $ref: "#/components/schemas/ConnectionType"
+            - type: string
+              enum:
+              - mcgw.azure
+          name:
+            maxLength: 255
+            type: string
+            description: Name of the connection
+            example: Hosted Azure Connection
+          description:
+            type: string
+            description: Description of the connection
+          source_endpoint:
+            $ref: "#/components/schemas/HostedEndpoint"
+          dest_endpoint:
+            $ref: "#/components/schemas/AzureEndpoint"
+          bandwidth:
+            $ref: "#/components/schemas/ConnectionBandwidth"
+          term:
+            $ref: "#/components/schemas/PricingTerm"
+          customer_number:
+            $ref: "#/components/schemas/customerNumber"
+          billing_account_number:
+            $ref: "#/components/schemas/billingAccountNumber"
+          created_at:
+            $ref: "#/components/schemas/CreatedAt"
+          created_by:
+            $ref: "#/components/schemas/CreatedBy"
+          updated_at:
+            $ref: "#/components/schemas/UpdatedAt"
+          updated_by:
+            $ref: "#/components/schemas/UpdatedBy"
+          class_of_service:
+            $ref: "#/components/schemas/ClassOfService"
+        additionalProperties: true
+        description: Connection
+    P2PVirtualConnection:
+      type: object
+      example:
+        connection_id: 55555555-5555-4555-8555-555555555555
+        state: active
+        type: port.port
+        name: My P2P Virtual Connection
+        class_of_service: basic
+        source_endpoint:
+          service_id: TN/KXFN/000002/LVLC
+          ce_vlan: 240
+        dest_endpoint:
+          service_id: TN/KXFN/000003/LVLC
+          ce_vlan: 241
+        bandwidth: 500
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+      allOf:
+      - $ref: "#/components/schemas/BaseConnectionResponse"
+      - required:
+        - bandwidth
+        - billing_account_number
+        - customer_number
+        - dest_endpoint
+        - name
+        - source_endpoint
+        type: object
+        properties:
+          type:
+            allOf:
+            - $ref: "#/components/schemas/ConnectionType"
+            - type: string
+              enum:
+              - port.port
+          name:
+            maxLength: 255
+            type: string
+            description: Name of the connection
+            example: My P2P Virtual Connection
+          description:
+            type: string
+            description: Description of the connection
+          class_of_service:
+            $ref: "#/components/schemas/ClassOfService"
+          source_endpoint:
+            $ref: "#/components/schemas/Port"
+          dest_endpoint:
+            $ref: "#/components/schemas/HostedEndpoint"
+          bandwidth:
+            $ref: "#/components/schemas/ConnectionBandwidth"
+          term:
+            $ref: "#/components/schemas/PricingTerm"
+          customer_number:
+            $ref: "#/components/schemas/customerNumber"
+          billing_account_number:
+            $ref: "#/components/schemas/billingAccountNumber"
+          created_at:
+            $ref: "#/components/schemas/CreatedAt"
+          created_by:
+            $ref: "#/components/schemas/CreatedBy"
+          updated_at:
+            $ref: "#/components/schemas/UpdatedAt"
+          updated_by:
+            $ref: "#/components/schemas/UpdatedBy"
+        additionalProperties: true
+        description: Point to Point Virtual Connection
+    CreateP2PVirtualConnection:
+      required:
+      - bandwidth
+      - billing_account_number
+      - customer_number
+      - dest_endpoint
+      - name
+      - source_endpoint
+      - term
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+          description: Name of the connection
+          example: My P2P Virtual Connection
+        description:
+          type: string
+          description: Description of the connection
+        class_of_service:
+          $ref: "#/components/schemas/ClassOfService"
+        source_endpoint:
+          $ref: "#/components/schemas/Port"
+        dest_endpoint:
+          $ref: "#/components/schemas/HostedEndpoint"
+        bandwidth:
+          $ref: "#/components/schemas/ConnectionBandwidth"
+        term:
+          $ref: "#/components/schemas/PricingTerm"
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+      description: Point to Point Virtual Connection
+      example:
+        name: My P2P Virtual Connection
+        description: Primary P2P connection
+        class_of_service: basic
+        source_endpoint:
+          service_id: TN/KXFN/000002/LVLC
+          ce_vlan: 240
+        dest_endpoint:
+          service_id: TN/KXFN/000003/LVLC
+          ce_vlan: 241
+        bandwidth: 500
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    CreatedAt:
+      type: string
+      description: Timestamp when the resource was created
+      format: date-time
+      example: 2024-01-01T00:00:00Z
+    CreatedBy:
+      type: string
+      description: The person or system that submitted a request creating the resource
+      example: Dale Cooper
+    UpdatedAt:
+      type: string
+      description: Timestamp when the resource was last modified
+      format: date-time
+      nullable: true
+      example: 2024-01-10T00:00:00Z
+    UpdatedBy:
+      type: string
+      description: The person or system that last submitting a request modifying the resource
+      example: Laura Palmer
+      nullable: true
+    ClassOfService:
+      type: string
+      description: Class of Service for the connection
+      example: basic
+      enum:
+      - basic
+      - dedicated
+    ConnectionType:
+      type: string
+      description: Type of connection topology
+      example: mcgw.aws
+      enum:
+      - mcgw.aws
+      - mcgw.gcp
+      - mcgw.azure
+      - mcgw.azure-gov
+      - mcgw.oci
+      - mcgw.oci-gov
+      - mcgw.port
+      - port.port
+      - port.aws
+      - port.gcp
+      - port.azure
+      - port.azure-gov
+      - port.oci
+      - port.oci-gov
+      - mcgw.lmcc
+    PricingCategory:
+      type: string
+      description: Pricing category based on connection topology
+      example: datacenter
+      enum:
+      - csp
+      - datacenter
+      - metro
+      - longhaul
+    ConnectionBandwidthPriceGroup:
+      required:
+      - bandwidth
+      - options
+      type: object
+      properties:
+        bandwidth:
+          $ref: "#/components/schemas/ConnectionBandwidth"
+        options:
+          minItems: 1
+          type: array
+          items:
+            $ref: "#/components/schemas/ConnectionBandwidthPriceOption"
+      description: Priced options grouped by bandwidth
+      example:
+        bandwidth: 1000
+        options:
+        - category: datacenter
+          class_of_service: basic
+          price_hourly: "0.625000"
+          price_monthly: "375.000000"
+    ConnectionBandwidthPriceOption:
+      required:
+      - category
+      - class_of_service
+      - price_hourly
+      - price_monthly
+      type: object
+      properties:
+        category:
+          $ref: "#/components/schemas/PricingCategory"
+        class_of_service:
+          $ref: "#/components/schemas/ClassOfService"
+        price_hourly:
+          pattern: "^(0|[1-9]\\d*)(\\.\\d{1,6})?$"
+          type: string
+          description: Hourly price in decimal format
+          example: "0.625000"
+        price_monthly:
+          pattern: "^(0|[1-9]\\d*)(\\.\\d{1,6})?$"
+          type: string
+          description: Monthly price in decimal format
+          example: "375.000000"
+      description: Individual price option for a bandwidth
+      example:
+        category: datacenter
+        class_of_service: basic
+        price_hourly: "0.625000"
+        price_monthly: "375.000000"
+    CreateHostedOciConnection:
+      required:
+      - bandwidth
+      - billing_account_number
+      - customer_number
+      - dest_endpoint
+      - name
+      - source_endpoint
+      - term
+      type: object
+      properties:
+        connection_id:
+          pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          type: string
+          description: Unique identifier for the connection
+          example: 341f2a21-8098-4538-b09c-b7de694caf4b
+        name:
+          maxLength: 255
+          type: string
+          description: Name of the connection
+          example: Hosted OCI Connection
+        description:
+          type: string
+          description: Description of the connection
+        source_endpoint:
+          $ref: "#/components/schemas/HostedEndpoint"
+        dest_endpoint:
+          $ref: "#/components/schemas/CreateOciEndpoint"
+        bandwidth:
+          $ref: "#/components/schemas/ConnectionBandwidth"
+        term:
+          $ref: "#/components/schemas/PricingTerm"
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+        class_of_service:
+          $ref: "#/components/schemas/ClassOfService"
+      description: Connection for OCI.
+      example:
+        connection_id: 341f2a21-8098-4538-b09c-b7de694caf4b
+        name: Hosted OCI Connection
+        description: OCI destination from Gateway interface
+        source_endpoint:
+          gateway:
+            gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+          interface:
+            interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+          ipv4_address: 10.10.0.1/30
+        dest_endpoint:
+          ocid: ocid1.virtualcircuit.oc1.us-region-1.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          on_ramp: oci-phx
+          port: Port-1
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    HostedOciConnection:
+      type: object
+      example:
+        connection_id: 44444444-4444-4444-8444-444444444444
+        state: active
+        type: mcgw.oci
+        name: Hosted OCI Connection
+        description: OCI destination from Gateway interface
+        source_endpoint:
+          gateway:
+            gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+            name: MCGW-East
+          interface:
+            interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+            name: Primary Interface
+          ipv4_address: 10.10.0.1/30
+        dest_endpoint:
+          description: OCI virtual circuit
+          on_ramp: oci-phx
+          vlan: 230
+          port: Port-1
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+        created_at: 2024-01-01T12:00:00Z
+        created_by: api-user
+        updated_at: 2024-01-15T18:30:00Z
+        updated_by: api-user
+      allOf:
+      - $ref: "#/components/schemas/BaseConnectionResponse"
+      - required:
+        - bandwidth
+        - billing_account_number
+        - customer_number
+        - dest_endpoint
+        - name
+        - source_endpoint
+        type: object
+        properties:
+          type:
+            allOf:
+            - $ref: "#/components/schemas/ConnectionType"
+            - type: string
+              enum:
+              - mcgw.oci
+          name:
+            maxLength: 255
+            type: string
+            description: Name of the connection
+            example: Hosted OCI Connection
+          description:
+            type: string
+            description: Description of the connection
+          source_endpoint:
+            $ref: "#/components/schemas/HostedEndpoint"
+          dest_endpoint:
+            $ref: "#/components/schemas/OciEndpoint"
+          bandwidth:
+            $ref: "#/components/schemas/ConnectionBandwidth"
+          term:
+            $ref: "#/components/schemas/PricingTerm"
+          customer_number:
+            $ref: "#/components/schemas/customerNumber"
+          billing_account_number:
+            $ref: "#/components/schemas/billingAccountNumber"
+          created_at:
+            $ref: "#/components/schemas/CreatedAt"
+          created_by:
+            $ref: "#/components/schemas/CreatedBy"
+          updated_at:
+            $ref: "#/components/schemas/UpdatedAt"
+          updated_by:
+            $ref: "#/components/schemas/UpdatedBy"
+          class_of_service:
+            $ref: "#/components/schemas/ClassOfService"
+        additionalProperties: true
+        description: Connection
+    CreateOciEndpoint:
+      required:
+      - ocid
+      - on_ramp
+      type: object
+      properties:
+        ocid:
+          type: string
+          description: The Oracle Cloud ID (OCID) of the resource.
+        on_ramp:
+          type: string
+          description: On-ramp location for OCI connection
+          example: XY123
+        port:
+          type: string
+          description: Port for OCI connection
+      description: Connection termination on OCI
+      example:
+        ocid: ocid1.virtualcircuit.oc1.us-region-1.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        on_ramp: oci-phx
+        port: Port-1
+    OciEndpoint:
+      required:
+      - description
+      - on_ramp
+      type: object
+      properties:
+        description:
+          type: string
+        on_ramp:
+          type: string
+          description: On-ramp location for OCI connection
+        vlan:
+          $ref: "#/components/schemas/Vlan"
+        port:
+          type: string
+          description: Port for OCI connection
+      description: Connection termination on OCI
+      example:
+        description: OCI virtual circuit
+        on_ramp: oci-phx
+        vlan: 230
+        port: Port-1
+    onramp:
+      required:
+      - name
+      - provider
+      - status
+      type: object
+      properties:
+        name:
+          maxLength: 200
+          type: string
+          description: Onramp Name.
+        provider:
+          maxLength: 200
+          type: string
+        status:
+          maxLength: 200
+          type: string
+      example:
+        name: aws-us-east-1
+        provider: aws
+        status: available
+    uni:
+      required:
+      - billing_account_number
+      - customer_number
+      - port
+      - port_speed_mbps
+      - service_address
+      - service_id
+      - service_name
+      - supports_mcgw
+      type: object
+      properties:
+        service_id:
+          type: string
+          description: Primary Identifier
+          example: TN/KXFN/000000/LVLC
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        port:
+          type: string
+          description: Connected Port
+          example: GigabitEthernet0/0/11
+        port_speed_mbps:
+          maximum: 100000
+          minimum: 1
+          type: integer
+          description: Port Speed in Mbps
+          example: 1000
+        service_address:
+          type: string
+          description: Street address for the service
+          example: 123 N MAIN ST CITY STATE 00000 UNITED STATES
+        service_name:
+          type: string
+          description: A descriptive name for the service
+          example: my-port-name
+        supports_mcgw:
+          type: boolean
+          description: Indicates whether this uni supports Multi-Cloud Gateway Connections
+      example:
+        service_id: TN/KXFN/000000/LVLC
+        billing_account_number: 1-1ABCDE-F
+        customer_number: 1-ABCD
+        port: GigabitEthernet0/0/11
+        port_speed_mbps: 1000
+        service_address: 123 N MAIN ST CITY STATE 00000 UNITED STATES
+        service_name: my-port-name
+        supports_mcgw: true
+    ServiceError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code from the downstream validation service
+          example: "409005"
+        message:
+          type: string
+          description: Human-readable conflict message
+          example: This port has reached the 50 services limit. Select a different port or disconnect an existing service.
+      example:
+        code: "409005"
+        message: This port has reached the 50 services limit. Select a different port or disconnect an existing service.
+    UniDetail:
+      type: object
+      example:
+        service_id: TN/KXFN/000000/LVLC
+        billing_account_number: 1-1ABCDE-F
+        customer_number: 1-ABCD
+        port: GigabitEthernet0/0/11
+        port_speed_mbps: 1000
+        service_address: 123 N MAIN ST CITY STATE 00000 UNITED STATES
+        service_name: my-port-name
+        supports_mcgw: true
+        available_ce_vlans:
+        - minimum: 100
+          maximum: 200
+        - minimum: 300
+          maximum: 350
+        has_service_conflict: false
+      allOf:
+      - $ref: "#/components/schemas/uni"
+      - required:
+        - available_ce_vlans
+        - has_service_conflict
+        type: object
+        properties:
+          available_ce_vlans:
+            type: array
+            description: Provide available ranges of customer end vlans
+            items:
+              $ref: "#/components/schemas/CeVlanRange"
+          has_service_conflict:
+            type: boolean
+            description: Indicates whether this UNI has an existing service that will conflict with a new connection.
+          service_error:
+            $ref: "#/components/schemas/ServiceError"
+    CeVlanRange:
+      required:
+      - maximum
+      - minimum
+      type: object
+      properties:
+        minimum:
+          maximum: 4094
+          minimum: 1
+          type: integer
+        maximum:
+          maximum: 4094
+          minimum: 1
+          type: integer
+      example:
+        minimum: 100
+        maximum: 200
+    PortServiceId:
+      pattern: "^[A-Z0-9]{2}/[A-Z]{4}/[0-9]{6}/[A-Z]{4}$"
+      type: string
+      description: Identifier for the port service on which a connection will be built
+      example: TN/KXFN/000000/LVLC
+    CreatePrivatePeeringResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        gateway_id:
+          type: string
+        customer_interface_id:
+          type: string
+        ilm_interface_id:
+          type: string
+        customer_connection_id:
+          type: string
+        ilm_connection_id:
+          type: string
+      description: Request to create a private peering connection
+      example:
+        status: accepted
+        gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+        customer_interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+        ilm_interface_id: 0fd8d4cd-b688-463d-9ea1-0ab928f24545
+        customer_connection_id: 7b21e3a1-3f6b-4d73-8fd4-73d07efdf50b
+        ilm_connection_id: 4fcd6920-39b5-4be2-96fd-d273af1f7d56
+    CreatePrivatePeeringRequest:
+      required:
+      - activation_key
+      - billing_account_number
+      - customer_number
+      - dest_endpoint
+      - name
+      - source_endpoint
+      type: object
+      properties:
+        billing_account_number:
+          $ref: "#/components/schemas/billingAccountNumber"
+        customer_number:
+          $ref: "#/components/schemas/customerNumber"
+        activation_key:
+          type: string
+          description: Encoded activation key provided by the customer for private peering connection
+          example: abc123def456ghi789jkl012mno345pq
+        name:
+          maxLength: 255
+          type: string
+          description: Name of the connection
+          example: Hosted AWS Connection
+        description:
+          type: string
+          description: Description of the connection
+        term:
+          $ref: "#/components/schemas/PricingTerm"
+        source_endpoint:
+          oneOf:
+          - $ref: "#/components/schemas/GatewayEndpoint"
+          - $ref: "#/components/schemas/PrivatePeeringPort"
+        dest_endpoint:
+          $ref: "#/components/schemas/IlmEndpoint"
+      description: Request to create a private peering connection
+      example:
+        billing_account_number: 1-1ABCDE-F
+        customer_number: 1-ABCD
+        activation_key: abc123def456ghi789jkl012mno345pq
+        name: Private Peering via Gateway
+        description: Private peering sourced from an existing Gateway interface
+        term: Monthly
+        source_endpoint:
+          gateway:
+            gateway_id: d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2
+          interface:
+            interface_id: f0b9cf7b-18ca-4d04-82d5-76198ca6d34f
+          ipv4_address: 10.10.0.1/30
+        dest_endpoint:
+          on_ramp: ilm-denver
+          provider: ilm
+    PrivatePeeringPort:
+      required:
+      - service_id
+      type: object
+      properties:
+        service_id:
+          $ref: "#/components/schemas/PortServiceId"
+        ce_vlan:
+          $ref: "#/components/schemas/CeVlan"
+        md5_authentication:
+          type: boolean
+          description: Indicates if MD5 authentication is enabled for the BGP session
+          example: true
+        md5_password:
+          type: string
+          description: MD5 password for the BGP session
+          example: 482c811da5d5b4bc6d497ffa98491e38
+        bfd:
+          type: boolean
+          description: Indicates if BFD (Bidirectional Forwarding Detection) is enabled for the BGP session
+          example: true
+        bfd_multiplier:
+          $ref: "#/components/schemas/BfdMultiplier"
+        bfd_interval:
+          $ref: "#/components/schemas/BfdInterval"
+        inbound_routing_rules:
+          type: string
+          enum:
+          - allow all
+          - deny all
+        outbound_routing_rules:
+          type: string
+          enum:
+          - allow all
+          - deny all
+      description: Lumen Multiplexed Port
+      example:
+        service_id: TN/KXFN/000000/LVLC
+        ce_vlan: 200
+        md5_authentication: true
+        md5_password: 482c811da5d5b4bc6d497ffa98491e38
+        bfd: true
+        bfd_multiplier: 6
+        bfd_interval: 500
+        inbound_routing_rules: allow all
+        outbound_routing_rules: allow all
+    BfdInterval:
+      type: integer
+      description: BFD interval in milliseconds for the BGP session
+      example: 500
+      enum:
+      - 500
+      - 1000
+      - 1500
+      - 2000
+      default: 500
+    BfdMultiplier:
+      maximum: 10
+      minimum: 5
+      type: integer
+      description: BFD multiplier for the BGP session
+      example: 6
+      default: 5
+    billingAccountNumber:
+      title: Billing Account Number
+      type: string
+      description: Lumen defined billing account number the application will be making transactions for. A customer number can have many billing account numbers (BANs)
+      example: 1-1ABCDE-F
+    customerNumber:
+      title: Customer Number
+      type: string
+      description: Lumen defined customer ID. Also known as BusOrg number.
+      example: 1-ABCD
+    LpdpError:
+      required:
+      - code
+      - detail
+      - message
+      type: object
+      properties:
+        detail:
+          type: string
+          description: "A granular description on the specific error related to a body property, query parameter, path parameters, and/or header."
+          example: The 'name' field is required and must be a non-empty string.
+        pointer:
+          type: string
+          description: A JSON Pointer to a specific request body property that is the source of error.
+          example: /data/attributes/name
+        parameter:
+          type: string
+          description: The name of the query or path parameter that is the source of error.
+          example: name
+        header:
+          type: string
+          description: The name of the header that is the source of error.
+          example: Authorization
+        code:
+          type: string
+          description: An optional error code that is specific to the API and error condition. This can be used by clients to programmatically identify specific error conditions and take appropriate actions.
+          example: ERR:0000
+        message:
+          type: string
+          description: A human-readable message that provides more details about the error condition. This message is intended to be read by developers and can be used for debugging purposes.
+          example: An unexpected error occurred while processing the request.
+        meta:
+          type: object
+          additionalProperties: true
+          description: |
+            Optional unregulated extension for machine-readable context. Lumen does not prescribe its structure. Teams may define custom schemas if needed.
+      additionalProperties: false
+      example:
+        detail: The 'name' field is required and must be a non-empty string.
+        pointer: /data/attributes/name
+        parameter: name
+        header: Authorization
+        code: ERR:0000
+        message: An unexpected error occurred while processing the request.
+        meta:
+          request_id: 65f4ac8b6d4a
+      x-go-type-name: ErrorDetail
+    LpdpProblem:
+      required:
+      - type
+      type: object
+      properties:
+        type:
+          type: string
+          description: |
+            A URI reference that uniquely identifies the problem type only in the context of the provided API. Opposed to the specification in RFC-9457, it is neither recommended to be dereferenceable and point to a human-readable documentation nor globally unique for the problem type.
+          format: uri
+          example: https://server.com/problems/definition
+          default: about:blank
+        title:
+          type: string
+          description: |
+            A short summary of the problem type. Written in English and readable for engineers, usually not suited for non technical stakeholders and not localized.
+          example: Title for the error situation.
+        status:
+          maximum: 600
+          exclusiveMaximum: true
+          minimum: 100
+          type: integer
+          description: |
+            The HTTP status code generated by the origin server for this occurrence of the problem.
+          format: int32
+        detail:
+          type: string
+          description: |
+            A human readable explanation specific to this occurrence of the problem that is helpful to locate the problem and give advice on how to proceed. Written in English and readable for engineers, usually not suited for non technical stakeholders and not localized.
+          example: Description for the error situation.
+        instance:
+          type: string
+          description: |
+            A URI reference that identifies the specific occurrence of the problem, e.g. by adding a fragment identifier or sub-path to the problem type. May be used to locate the root of this problem in the source code.
+          format: uri
+          example: https://server.com/some/uri-reference#specific-occurrence-context
+        errors:
+          type: array
+          description: |
+            Array that describes the details of multiple related errors.  Each member is an object containing "detail" to describe the issue and "pointer" to locate the problem within the request's content using a JSON Pointer.
+          items:
+            $ref: "#/components/schemas/LpdpError"
+      additionalProperties: false
+      example:
+        type: https://server.com/problems/definition
+        title: Validation failed
+        status: 422
+        detail: The request payload contains one or more invalid fields.
+        instance: https://server.com/some/uri-reference#specific-occurrence-context
+        errors:
+        - detail: The 'name' field is required and must be a non-empty string.
+          pointer: /data/attributes/name
+          code: ERR:0000
+          message: An unexpected error occurred while processing the request.
+      x-go-type-name: ProblemDetail
+    EndpointType:
+      type: string
+      description: Type for one end of a connection
+      example: mcgw
+      enum:
+      - aws
+      - aws-lmcc
+      - azure
+      - azure-gov
+      - gcp
+      - mcgw
+      - oci
+      - oci-gov
+      - port
+    Pagination:
+      required:
+      - limit
+      - offset
+      - total
+      type: object
+      properties:
+        limit:
+          maximum: 100
+          minimum: 1
+          type: integer
+          description: Maximum number of records to return
+          format: int32
+          default: 25
+        offset:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          description: Number of records to skip for pagination
+          format: int32
+          default: 0
+        total:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          description: Total number of records available
+          format: int32
+      example:
+        limit: 25
+        offset: 0
+        total: 240
+    CeVlan:
+      maximum: 4094
+      minimum: 1
+      type: integer
+      description: Customer Edge VLAN ID (1-4094)
+      example: 100
+    Vlan:
+      maximum: 4094
+      minimum: 1
+      type: integer
+      description: VLAN ID (1-4094)
+      example: 100
+    ConnectionSummary:
+      type: object
+      example:
+        connection_id: 7b21e3a1-3f6b-4d73-8fd4-73d07efdf50b
+        name: LCI AWS Primary
+        state: active
+        type: mcgw.aws
+        bandwidth: 1000
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+      allOf:
+      - $ref: "#/components/schemas/BaseConnectionResponse"
+      - required:
+        - bandwidth
+        - billing_account_number
+        - customer_number
+        - name
+        type: object
+        properties:
+          name:
+            maxLength: 255
+            type: string
+            description: Name of the connection
+            example: My Connection
+          description:
+            type: string
+            description: Description of the connection
+          bandwidth:
+            $ref: "#/components/schemas/ConnectionBandwidth"
+          type:
+            $ref: "#/components/schemas/ConnectionType"
+          customer_number:
+            type: string
+          billing_account_number:
+            type: string
+          created_at:
+            $ref: "#/components/schemas/CreatedAt"
+          created_by:
+            $ref: "#/components/schemas/CreatedBy"
+          updated_at:
+            $ref: "#/components/schemas/UpdatedAt"
+          updated_by:
+            $ref: "#/components/schemas/UpdatedBy"
+        description: Connection
+  responses:
+    "400BadRequest":
+      description: Bad Request.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "401Unauthorized":
+      description: Unauthorized.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "403Forbidden":
+      description: Forbidden.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "500InternalServerError":
+      description: Internal server error.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "404NotFound":
+      description: Not Found.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "405MethodNotAllowed":
+      description: Method Not Allowed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+    "422UnprocessableEntity":
+      description: Unprocessable entity.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/LpdpProblem"
+  parameters:
+    CustomerNumberOptional:
+      name: customer_number
+      in: query
+      description: Customer number.
+      required: false
+      schema:
+        $ref: "#/components/schemas/customerNumber"
+    BillingAccountNumberOptional:
+      name: billing_account_number
+      in: query
+      description: Billing account number.
+      required: false
+      schema:
+        $ref: "#/components/schemas/billingAccountNumber"
+    ConnectionId:
+      name: connection_id
+      in: path
+      description: Unique identifier for the connection.
+      required: true
+      schema:
+        $ref: "#/components/schemas/McgwEntityId"
+    CloudId:
+      name: cloud_id
+      in: query
+      description: "An identifier for the cloud environment to which the connection will be established. One of \"aws\", \"azure\", \"gcp\" or \"oci\"."
+      required: false
+      schema:
+        type: string
+        description: "An identifier specific to the cloud provider. One of AWS Account Id, Azure Service Key, Google Pairing Key or Oracle OCID."
+      examples:
+        AwsAccountId:
+          summary: AWS Account ID
+          value: "123456789012"
+        AzureServiceKey:
+          summary: Azure ExpressRoute Service Key
+          value: c09e556d-c19b-4273-8cc1-15adfb94abb6
+        GooglePairingKey:
+          summary: Google Pairing Key
+          value: 4f9b07c3-df49-4cee-90bd-a302e5a89804/us-region1/2
+        OracleOCID:
+          summary: Oracle Cloud Identifier (OCID)
+          value: ocid1.virtualcircuit.oc1.us-region-1.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    ServiceNamePathParam:
+      name: service_name
+      in: path
+      description: "Service name in the format of {service_type}/{cloud_provider}/{cloud_id}/{location}."
+      required: true
+      schema:
+        type: string
+        example: tn-kxfn-000000-lvlc
+    LimitQuery:
+      name: limit
+      in: query
+      description: Maximum number of records to return.
+      required: false
+      schema:
+        maximum: 100
+        minimum: 1
+        type: integer
+        format: int32
+        default: 25
+        x-go-name: PaginationLimit
+    OffsetQuery:
+      name: offset
+      in: query
+      description: Number of records to skip for pagination.
+      required: false
+      schema:
+        maximum: 1000000
+        minimum: 0
+        type: integer
+        format: int32
+        default: 0
+    All:
+      name: all
+      in: query
+      description: Option to return all records without pagination.
+      required: false
+      schema:
+        type: boolean
+        default: false
+  examples:
+    private-peering-source-endpoint-gateway:
+      summary: Private peering with Gateway source endpoint
+      value:
+        billing_account_number: 1-1ABCDE-F
+        customer_number: 1-ABCD
+        activation_key: abc123def456ghi789jkl012mno345pq
+        name: Private Peering via Gateway
+        description: Private peering sourced from an existing MCGW interface
+        term: Monthly
+        source_endpoint:
+          gateway:
+            gateway_id: aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee
+          interface:
+            interface_id: 11111111-2222-4aaa-8bbb-555555555555
+          ipv4_address: 192.168.10.1/30
+        dest_endpoint:
+          on_ramp: ilm-denver
+          provider: ilm
+    private-peering-source-endpoint-port:
+      summary: Private peering with a port source endpoint
+      value:
+        billing_account_number: 1-1ABCDE-F
+        customer_number: 1-ABCD
+        activation_key: abc123def456ghi789jkl012mno345pq
+        name: Private Peering via Port
+        description: Private peering sourced from a port
+        term: Monthly
+        source_endpoint:
+          service_id: TN/KXFN/000000/LVLC
+          ce_vlan: 200
+          md5_authentication: true
+          md5_password: 482c811da5d5b4bc6d497ffa98491e38
+          bfd: true
+          bfd_multiplier: 6
+          bfd_interval: 500
+          inbound_routing_rules: allow all
+          outbound_routing_rules: allow all
+        dest_endpoint:
+          on_ramp: ilm-denver
+          provider: ilm
+    connection-bandwidth-options:
+      summary: Connection bandwidth options
+      value:
+      - bandwidth: 50
+        options:
+        - category: datacenter
+          class_of_service: basic
+          price_hourly: "0.062500"
+          price_monthly: "37.500000"
+      - bandwidth: 1000
+        options:
+        - category: metro
+          class_of_service: basic
+          price_hourly: "0.625000"
+          price_monthly: "375.000000"
+        - category: longhaul
+          class_of_service: dedicated
+          price_hourly: "0.704200"
+          price_monthly: "422.520000"
+    connections-list-200:
+      summary: Connection list response
+      value:
+        pagination:
+          offset: 0
+          limit: 25
+          total: 6
+        data:
+        - connection_id: 11111111-1111-4111-8111-111111111111
+          state: active
+          name: AWS Hosted Connection
+          type: mcgw.aws
+          description: AWS to MCGW
+          source_endpoint:
+            gateway:
+              gateway_id: bbbbbbb1-1111-4111-8111-111111111111
+              name: MCGW-East
+            interface:
+              interface_id: aaaaaaa1-1111-4111-8111-111111111111
+              name: Primary Interface
+            ipv4_address: 10.0.0.1/30
+          dest_endpoint:
+            on_ramp: aws-us-east-1
+            vlan: 200
+          bandwidth: 1000
+          term: Monthly
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+        - connection_id: 22222222-2222-4222-8222-222222222222
+          state: active
+          name: Azure Hosted Connection
+          type: mcgw.azure
+          description: Azure to MCGW
+          source_endpoint:
+            service_id: TN/KXFN/000000/LVLC
+            ce_vlan: 210
+          dest_endpoint:
+            description: Azure ExpressRoute
+            on_ramp: azure-east-us
+            vlan: 210
+          bandwidth: 500
+          term: Monthly
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+        - connection_id: 33333333-3333-4333-8333-333333333333
+          state: active
+          name: GCP Hosted Connection
+          type: mcgw.gcp
+          description: GCP to MCGW
+          source_endpoint:
+            gateway:
+              gateway_id: bbbbbbb3-3333-4333-8333-333333333333
+              name: MCGW-West
+            interface:
+              interface_id: aaaaaaa3-3333-4333-8333-333333333333
+              name: Primary Interface
+            ipv4_address: 10.0.2.1/30
+          dest_endpoint:
+            on_ramp: gcp-us-central1
+            vlan_attachment_name: vlan-attachment-12345
+          bandwidth: 2000
+          term: Monthly
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+        - connection_id: 44444444-4444-4444-8444-444444444444
+          state: active
+          name: OCI Hosted Connection
+          type: mcgw.oci
+          description: OCI to MCGW
+          source_endpoint:
+            service_id: TN/KXFN/000001/LVLC
+            ce_vlan: 230
+          dest_endpoint:
+            description: OCI virtual circuit
+            on_ramp: oci-phx
+            vlan: 230
+          bandwidth: 1000
+          term: Monthly
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+        - connection_id: 55555555-5555-4555-8555-555555555555
+          state: active
+          name: P2P Virtual Connection
+          type: port.port
+          description: Port to port
+          class_of_service: basic
+          source_endpoint:
+            service_id: TN/KXFN/000002/LVLC
+            ce_vlan: 240
+          dest_endpoint:
+            service_id: TN/KXFN/000003/LVLC
+            ce_vlan: 241
+          bandwidth: 500
+          term: Monthly
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+        - connection_id: 66666666-6666-4666-8666-666666666666
+          state: active
+          name: ILM to MCGW Connection
+          type: mcgw.port
+          description: ILM endpoint connection
+          source_endpoint:
+            service_id: TN/KXFN/000004/LVLC
+            ce_vlan: 250
+          dest_endpoint:
+            on_ramp: ilm-denver
+            provider: ilm
+          bandwidth: 200
+          term: Monthly
+          customer_number: 1-ABCD
+          billing_account_number: 1-1ABCDE-F
+    connection-details-aws:
+      summary: AWS connection payload
+      value:
+        connection_id: 11111111-1111-4111-8111-111111111111
+        state: active
+        name: AWS Hosted Connection
+        type: mcgw.aws
+        description: AWS to MCGW
+        source_endpoint:
+          gateway:
+            gateway_id: bbbbbbb1-1111-4111-8111-111111111111
+            name: MCGW-East
+          interface:
+            interface_id: aaaaaaa1-1111-4111-8111-111111111111
+            name: Primary Interface
+          ipv4_address: 10.0.0.1/30
+        dest_endpoint:
+          on_ramp: aws-us-east-1
+          vlan: 200
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    connection-details-azure:
+      summary: Azure connection payload
+      value:
+        connection_id: 22222222-2222-4222-8222-222222222222
+        state: active
+        name: Azure Hosted Connection
+        type: mcgw.azure
+        description: Azure to MCGW
+        source_endpoint:
+          service_id: TN/KXFN/000000/LVLC
+          ce_vlan: 210
+        dest_endpoint:
+          description: Azure ExpressRoute
+          on_ramp: azure-east-us
+          vlan: 210
+        bandwidth: 500
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    connection-details-gcp:
+      summary: GCP connection payload
+      value:
+        connection_id: 33333333-3333-4333-8333-333333333333
+        state: active
+        name: GCP Hosted Connection
+        type: mcgw.gcp
+        description: GCP to MCGW
+        source_endpoint:
+          gateway:
+            gateway_id: bbbbbbb3-3333-4333-8333-333333333333
+            name: MCGW-West
+          interface:
+            interface_id: aaaaaaa3-3333-4333-8333-333333333333
+            name: Primary Interface
+          ipv4_address: 10.0.2.1/30
+        dest_endpoint:
+          on_ramp: gcp-us-central1
+          vlan_attachment_name: vlan-attachment-12345
+        bandwidth: 2000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    connection-details-oci:
+      summary: OCI connection payload
+      value:
+        connection_id: 44444444-4444-4444-8444-444444444444
+        state: active
+        name: OCI Hosted Connection
+        type: mcgw.oci
+        description: OCI to MCGW
+        source_endpoint:
+          service_id: TN/KXFN/000001/LVLC
+          ce_vlan: 230
+        dest_endpoint:
+          description: OCI virtual circuit
+          on_ramp: oci-phx
+          vlan: 230
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    connection-details-p2p:
+      summary: P2P virtual connection payload
+      value:
+        connection_id: 55555555-5555-4555-8555-555555555555
+        state: active
+        name: P2P Virtual Connection
+        type: port.port
+        description: Port to port
+        class_of_service: basic
+        source_endpoint:
+          service_id: TN/KXFN/000002/LVLC
+          ce_vlan: 240
+        dest_endpoint:
+          service_id: TN/KXFN/000003/LVLC
+          ce_vlan: 241
+        bandwidth: 500
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    connection-details-ilm:
+      summary: ILM connection payload
+      value:
+        connection_id: 66666666-6666-4666-8666-666666666666
+        state: active
+        name: ILM to MCGW Connection
+        type: mcgw.port
+        description: ILM endpoint connection
+        source_endpoint:
+          service_id: TN/KXFN/000004/LVLC
+          ce_vlan: 250
+        dest_endpoint:
+          on_ramp: ilm-denver
+          provider: ilm
+        bandwidth: 200
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    create-hosted-aws-source-endpoint-mcgw:
+      summary: Hosted AWS with MCGW source endpoint
+      value:
+        name: Hosted AWS Connection
+        description: AWS destination from MCGW interface
+        source_endpoint:
+          gateway:
+            gateway_id: aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee
+          interface:
+            interface_id: 11111111-2222-4aaa-8bbb-555555555555
+          ipv4_address: 192.168.10.1/30
+        dest_endpoint:
+          aws_account_id: "123456789012"
+          on_ramp: aws-us-east-1
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    create-hosted-aws-source-endpoint-port:
+      summary: Hosted AWS with Port source endpoint
+      value:
+        name: Hosted AWS Connection
+        description: AWS destination from port
+        source_endpoint:
+          service_id: TN/KXFN/000000/LVLC
+          ce_vlan: 200
+        dest_endpoint:
+          aws_account_id: "123456789012"
+          on_ramp: aws-us-east-1
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    create-hosted-gcp-source-endpoint-mcgw:
+      summary: Hosted GCP with MCGW source endpoint
+      value:
+        name: Hosted GCP Connection
+        description: GCP destination from MCGW interface
+        source_endpoint:
+          gateway:
+            gateway_id: aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee
+          interface:
+            interface_id: 11111111-2222-4aaa-8bbb-555555555555
+          ipv4_address: 192.168.10.1/30
+        dest_endpoint:
+          on_ramp: gcp-us-central1
+          pairing_key: 4f9b07c3-df49-4cee-90bd-a302e5a89804/us-region1/2
+          vlan_attachment_name: vlan-attachment-12345
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    create-hosted-gcp-source-endpoint-port:
+      summary: Hosted GCP with Port source endpoint
+      value:
+        name: Hosted GCP Connection
+        description: GCP destination from port
+        source_endpoint:
+          service_id: TN/KXFN/000000/LVLC
+          ce_vlan: 210
+        dest_endpoint:
+          on_ramp: gcp-us-central1
+          pairing_key: 4f9b07c3-df49-4cee-90bd-a302e5a89804/us-region1/2
+          vlan_attachment_name: vlan-attachment-12345
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    create-hosted-azure-source-endpoint-mcgw:
+      summary: Hosted Azure with MCGW source endpoint
+      value:
+        name: Hosted Azure Connection
+        description: Azure destination from MCGW interface
+        source_endpoint:
+          gateway:
+            gateway_id: aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee
+          interface:
+            interface_id: 11111111-2222-4aaa-8bbb-555555555555
+          ipv4_address: 192.168.10.1/30
+        dest_endpoint:
+          description: Azure ExpressRoute
+          on_ramp: azure-east-us
+          service_key: c09e556d-c19b-4273-8cc1-15adfb94abb6
+          vlan: 220
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    create-hosted-azure-source-endpoint-port:
+      summary: Hosted Azure with Port source endpoint
+      value:
+        name: Hosted Azure Connection
+        description: Azure destination from port
+        source_endpoint:
+          service_id: TN/KXFN/000000/LVLC
+          ce_vlan: 220
+        dest_endpoint:
+          description: Azure ExpressRoute
+          on_ramp: azure-east-us
+          service_key: c09e556d-c19b-4273-8cc1-15adfb94abb6
+          vlan: 220
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    create-hosted-oci-source-endpoint-mcgw:
+      summary: Hosted OCI with MCGW source endpoint
+      value:
+        connection_id: 77777777-8888-4999-8aaa-bbbbbbbbbbbb
+        name: Hosted OCI Connection
+        description: OCI destination from MCGW interface
+        source_endpoint:
+          gateway:
+            gateway_id: aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee
+          interface:
+            interface_id: 11111111-2222-4aaa-8bbb-555555555555
+          ipv4_address: 192.168.10.1/30
+        dest_endpoint:
+          ocid: ocid1.virtualcircuit.oc1.us-region-1.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          on_ramp: oci-phx
+          port: Port-1
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+    create-hosted-oci-source-endpoint-port:
+      summary: Hosted OCI with Port source endpoint
+      value:
+        connection_id: 77777777-8888-4999-8aaa-bbbbbbbbbbbb
+        name: Hosted OCI Connection
+        description: OCI destination from port
+        source_endpoint:
+          service_id: TN/KXFN/000000/LVLC
+          ce_vlan: 230
+        dest_endpoint:
+          ocid: ocid1.virtualcircuit.oc1.us-region-1.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          on_ramp: oci-phx
+          port: Port-1
+        bandwidth: 1000
+        term: Monthly
+        customer_number: 1-ABCD
+        billing_account_number: 1-1ABCDE-F
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://api-test.lumen.com/oauth/v2/token
+          scopes: {}
+      x-auth-provider: apigee
+x-visibility: external
