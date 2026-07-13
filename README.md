@@ -4,7 +4,7 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-A stateful simulator of Lumen's two public bandwidth-on-demand APIs — [Ethernet On-Demand v5](https://d26yp52fi26crs.cloudfront.net/docs/ethernet-on-demand/openapi/Ethernet_On-Demand_API_8_1_2025.yaml) and [Internet On-Demand](https://d26yp52fi26crs.cloudfront.net/docs/internet-on-demand/openapi/Internet_On-Demand_2_19_2026.yaml) — built so network-automation solutions can be developed and tested without a carrier account. On top of it sits a working **closed-loop NetBox integration**: edit a circuit's `commit_rate` in NetBox and event-driven middleware reconciles the "network" to match, then writes the confirmation back to NetBox's journal.
+A stateful simulator of Lumen's public NaaS APIs — the **new generation** ([Multi-Cloud Gateway](docs/specs/Multi_Cloud_Gateway_API.yaml) `/mcgw/v1` and [Ethernet Fabric Connect](docs/specs/Ethernet_Fabric_Connect_API.yaml) `/fabric/v1`, published 2026-07-10 with no sandbox of their own) plus the legacy bandwidth-on-demand pair ([Ethernet On-Demand v5](https://d26yp52fi26crs.cloudfront.net/docs/ethernet-on-demand/openapi/Ethernet_On-Demand_API_8_1_2025.yaml) and [Internet On-Demand](https://d26yp52fi26crs.cloudfront.net/docs/internet-on-demand/openapi/Internet_On-Demand_2_19_2026.yaml)) — built so network-automation solutions can be developed and tested without a carrier account. On top of it sits a working **closed-loop NetBox integration**: edit a circuit's `commit_rate` in NetBox and event-driven middleware reconciles the "network" to match, then writes the confirmation back to NetBox's journal.
 
 > **Disclaimer:** independent project for development and education, based solely on Lumen's publicly published OpenAPI specifications. Not affiliated with, endorsed by, or representing Lumen Technologies.
 
@@ -66,6 +66,9 @@ Raw-curl versions of both flows (and everything else) are in the [manual](docs/M
 | Auth | OAuth2 client-credentials | same flow, fake creds |
 | Async completion | webhooks + order status | webhook fan-out + request records |
 | Guardrails | UNI capacity, order-contact validation, site restrictions | all enforced with Lumen-style `{code, message}` errors |
+| Gateway lifecycle (MCG) | `PENDING → PROVISIONING → PROVISIONED`, 201+Location | same state machine, tier capacity caps → 422 |
+| Fabric connections (EFC) | 202-async `provisioning → active → updating`, bandwidth enum, priced options | same, incl. concurrent-change 409 and per-cloud hosted flows |
+| Error models | RFC 7807 `problem+json` (new APIs) vs `{code, message}` (legacy) | both, path-aware — including in the OpenAPI docs |
 
 Seed data reuses the identifiers from Lumen's own documentation examples, so requests copied from the vendor docs run unchanged against the lab.
 

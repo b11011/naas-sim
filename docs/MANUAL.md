@@ -265,6 +265,54 @@ Or in one shot: `python examples/iod_change_bandwidth.py --speed 200`
 
 ---
 
+## 4b. New-generation APIs: Multi-Cloud Gateway + Ethernet Fabric Connect
+
+Published 2026-07-10, superseding Ethernet On-Demand. Same OAuth2 token; different
+paths, state machines, and **error model** (RFC 7807 `application/problem+json`
+instead of the legacy envelope). **No webhooks** — the real specs offer none; poll
+the resource state (events still appear at `/_lab/events` for observability).
+
+**Multi-Cloud Gateway** (`/mcgw/v1`) — L3 virtual gateways:
+
+```bash
+AUTH=(-H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json")
+
+# create a gateway (201 + Location; PROVISIONING → PROVISIONED after the delay)
+curl "${AUTH[@]}" -X POST http://localhost:8080/mcgw/v1/gateways -d '{
+  "name": "My-MCGW", "tier": "10 Gbps",
+  "customer_number": "1-ABCD", "billing_account_number": "1-1ABCDE-F"}'
+
+# then: interfaces, static-routes, prefix-lists, BGP sessions under the gateway
+curl "${AUTH[@]}" -X POST http://localhost:8080/mcgw/v1/gateways/<id>/interfaces   -d '{"name": "Primary Interface"}'
+```
+
+Tiers (`10 Gbps`, `50 Gbps`, `Unlimited`) cap the **aggregate bandwidth** of fabric
+connections anchored on the gateway — exceeding the cap returns `422 problem+json`.
+
+**Ethernet Fabric Connect** (`/fabric/v1`) — L2 connections onto gateway interfaces:
+
+```bash
+# hosted cloud connection (aws|gcp|azure|oci); 202, provisioning → active
+curl "${AUTH[@]}" -X POST http://localhost:8080/fabric/v1/connections/cloud/hosted/aws -d '{
+  "name": "AWS primary", "bandwidth": 1000, "term": "Hourly",
+  "customer_number": "1-ABCD", "billing_account_number": "1-1ABCDE-F",
+  "source_endpoint": {"gateway": {"gateway_id": "<gw-id>"},
+                       "interface": {"interface_id": "<if-id>"}},
+  "dest_endpoint": {"aws_account_id": "123456789012", "region": "us-east-1"}}'
+
+# bandwidth change = PATCH with an enum value (active → updating → active)
+curl "${AUTH[@]}" -X PATCH http://localhost:8080/fabric/v1/connections/cloud/hosted/aws/<id>   -d '{"bandwidth": 2000}'
+
+# priced options + billing
+curl "${AUTH[@]}" http://localhost:8080/fabric/v1/connections/<id>/bandwidths
+curl "${AUTH[@]}" http://localhost:8080/fabric/v1/billing/<id>
+```
+
+Bandwidth must be one of the spec enum (10…25000 Mbps); invalid values → `400`,
+modifying a non-`active` connection → `409`, tier capacity exceeded → `422` — all
+as `problem+json`. Seeded objects: gateway `4c85553e-…` (50 Gbps, PROVISIONED),
+interface `f0b9cf7b-…`, hosted-AWS connection `d2bdc87d-…` (1000 Mbps, active).
+
 ## 5. Webhooks and events
 
 Async completions (bandwidth applied, circuit created/deleted, order completed)

@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.0 — 2026-07-13
+
+**New-generation API simulation** — Lumen published Multi-Cloud Gateway and
+Ethernet Fabric Connect (2026-07-10), superseding Ethernet On-Demand. Both are
+now simulated from the published specs (vendored in `docs/specs/`):
+
+- **Multi-Cloud Gateway** (`/mcgw/v1`): gateway lifecycle (`PENDING → PROVISIONING → PROVISIONED`, 201+Location), interfaces, static routes, prefix lists, BGP sessions; tier capacity enforcement (10/50 Gbps/Unlimited aggregate caps → 422)
+- **Ethernet Fabric Connect** (`/fabric/v1`): virtual p2p + hosted cloud connections (AWS/GCP/Azure/OCI, 202-async `provisioning → active`), bandwidth-enum PATCH with `updating` state and concurrent-change 409, priced bandwidth options, billing endpoint, endpoint validation against gateways/interfaces
+- **RFC 7807 `problem+json` errors** on the new APIs (per spec), legacy `{code, message}` envelope retained for EOD/IOD — path-aware handlers and OpenAPI docs
+- **No webhooks on the new APIs** — matching the published specs (polling only); events still visible at `/_lab/events`
+- Persistence + startup reconciliation cover the new resources; seed data uses spec-example identifiers
+
+## v0.1.1 — 2026-07-11
 ## v0.1.1 — 2026-07-11
 
 Found in demo rehearsal:

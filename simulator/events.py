@@ -13,10 +13,16 @@ from .state import new_id, now_iso, store
 log = logging.getLogger("naas-sim")
 
 
-def emit(event_type: str, payload: dict):
-    """Record an event and fan it out to every registered webhook."""
+def emit(event_type: str, payload: dict, deliver: bool = True):
+    """Record an event; fan out to registered webhooks unless deliver=False.
+
+    The new-generation APIs (Multi-Cloud Gateway, Ethernet Fabric Connect)
+    have no webhook product — their events are logged for /_lab/events
+    observability but never delivered, matching the published specs."""
     event = {"eventId": new_id(), "eventType": event_type, "eventTime": now_iso(), "event": payload}
     store.events.append(event)
+    if not deliver:
+        return
     for hook in store.webhooks:
         asyncio.create_task(_deliver(hook["callback"], event))
 

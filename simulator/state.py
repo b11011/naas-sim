@@ -59,6 +59,16 @@ class Store:
         self.orders = {}            # orderId -> order
         self.order_counts = {}      # (customerNumber, gmt date) -> count
 
+        # Multi-Cloud Gateway (new-generation, /mcgw/v1)
+        self.gateways = {}          # gateway_id -> Gateway
+        self.mcg_interfaces = {}    # interface_id -> Interface
+        self.mcg_static_routes = {} # static_route_id -> route
+        self.prefix_lists = {}      # prefix_list_id -> prefix list
+        self.bgp_sessions = {}      # session_id -> BGP session
+
+        # Ethernet Fabric Connect (new-generation, /fabric/v1)
+        self.fabric_connections = {}  # connection_id -> connection
+
         # Webhooks / eventing
         self.webhooks = []          # [{"id": ..., "callback": url}]
         self.events = []            # every emitted event, newest last
@@ -77,7 +87,8 @@ class Store:
 
     _PERSISTED = ["speeds", "unis", "evcs", "ha_evcs", "evc_requests", "ha_evc_requests",
                   "partner_interconnects", "locations", "services", "quotes", "orders",
-                  "webhooks", "events"]
+                  "webhooks", "events", "gateways", "mcg_interfaces", "mcg_static_routes",
+                  "prefix_lists", "bgp_sessions", "fabric_connections"]
 
     def save(self):
         """Snapshot state to config.STATE_FILE (no-op when unset). Tokens are
@@ -159,6 +170,26 @@ class Store:
                     service["modifiedDateTime"] = now_iso()
                 service["status"] = "active"
             order["state"], order["completionDate"] = "completed", now_iso()
+        # New-generation resources: complete in-flight lifecycle transitions
+        for gw in self.gateways.values():
+            if gw["state"] in ("PENDING", "PROVISIONING"):
+                gw["state"] = "PROVISIONED"
+            elif gw["state"] == "DELETING":
+                gw["state"] = "DELETED"
+        for iface in self.mcg_interfaces.values():
+            if iface["state"] in ("PENDING", "PROVISIONING"):
+                iface["state"] = "PROVISIONED"
+            elif iface["state"] == "DELETING":
+                iface["state"] = "DELETED"
+        for b in self.bgp_sessions.values():
+            if b["state"] in ("PENDING", "PROVISIONING"):
+                b["state"], b["session_status"] = "PROVISIONED", "ESTABLISHED"
+        for cid in list(self.fabric_connections):
+            c = self.fabric_connections[cid]
+            if c["state"] in ("provisioning", "updating", "resetting"):
+                c["state"] = "active"
+            elif c["state"] == "deleting":
+                self.fabric_connections.pop(cid, None)
         self.save()
 
     # ---------------------------------------------------------- seeding
@@ -254,6 +285,53 @@ class Store:
              "address": "8910 Lenox Pointe Dr, Charlotte, NC", "partnerId": "43560",
              "partner": "Flexential", "naasEnabled": False},
         ]
+
+        gw_id = "4c85553e-91ce-4eab-9551-2014985f8c84"   # MCG spec example id
+        self.gateways[gw_id] = {
+            "gateway_id": gw_id,
+            "state": "PROVISIONED",
+            "name": "Primary-Prod-MCGW",
+            "description": "Primary production gateway for east region cloud connectivity",
+            "tier": "50 Gbps",
+            "asn": 65010,
+            "total_aggregate_bw": "1000 Mbps",
+            "term": "Monthly",
+            "customer_number": "1-ABCD",
+            "billing_account_number": "1-1ABCDE-F",
+            "created_at": now_iso(), "created_by": "user@email.com",
+            "updated_at": None, "updated_by": None,
+        }
+        if_id = "f0b9cf7b-18ca-4d04-82d5-76198ca6d34f"    # EFC spec example id
+        self.mcg_interfaces[if_id] = {
+            "interface_id": if_id,
+            "state": "PROVISIONED",
+            "name": "Primary Interface",
+            "description": "Primary interface for hosted cloud connections",
+            "gateway": {"gateway_id": gw_id, "name": "Primary-Prod-MCGW"},
+            "connection": None,
+            "address_family": "IPV4",
+            "created_at": now_iso(), "created_by": "user@email.com",
+            "updated_at": None, "updated_by": None,
+        }
+        conn_id = "d2bdc87d-3f76-4db6-8d2a-1f5f4b3fbbf2"  # EFC spec example id
+        self.fabric_connections[conn_id] = {
+            "connection_id": conn_id,
+            "connection_type": "hosted-aws",
+            "state": "active",
+            "name": "Hosted AWS Connection",
+            "description": "AWS to MCGW primary connection",
+            "class_of_service": "basic",
+            "bandwidth": 1000,
+            "term": "Hourly",
+            "source_endpoint": {"gateway": {"gateway_id": gw_id, "name": "Primary-Prod-MCGW"},
+                                "interface": {"interface_id": if_id, "name": "Primary Interface"},
+                                "ipv4_address": "10.10.0.1/30"},
+            "dest_endpoint": {"aws_account_id": "123456789012", "region": "us-east-1"},
+            "customer_number": "1-ABCD",
+            "billing_account_number": "1-1ABCDE-F",
+            "created_at": now_iso(), "created_by": "user@email.com",
+            "updated_at": None, "updated_by": None,
+        }
 
         self.services["771234567"] = {
             "id": "771234567",

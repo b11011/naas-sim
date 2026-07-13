@@ -13,18 +13,22 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from . import config
 from .auth import router as auth_router
 from .ethernet_on_demand import router as eod_router
+from .fabric_connect import router as efc_router
 from .internet_on_demand import router as iod_router
 from .lab import router as lab_router
 from .metrics import metrics
+from .multicloud_gateway import router as mcg_router
+from .problems import ProblemException, is_new_api, problem_response
 from .state import store
 
 app = FastAPI(
     title="Lumen NaaS Simulator",
-    version="0.1.0",
+    version="0.2.0",
     description=(
-        "Lab simulator for Lumen's NaaS APIs: Ethernet On-Demand v5 "
-        "(/Network/v5/DynamicConnection) and Internet On-Demand "
-        "(qualify → quote → order). Get a token from POST /oauth/v2/token "
+        "Lab simulator for Lumen's NaaS APIs — new generation: Multi-Cloud "
+        "Gateway (/mcgw/v1) and Ethernet Fabric Connect (/fabric/v1); legacy: "
+        "Ethernet On-Demand v5 (/Network/v5/DynamicConnection) and Internet "
+        "On-Demand (qualify → quote → order). Get a token from POST /oauth/v2/token "
         "with grant_type=client_credentials (default creds: "
         "naas-lab-client / naas-lab-secret)."
     ),
@@ -48,9 +52,18 @@ async def observe_and_persist(request: Request, call_next):
     return response
 
 
+@app.exception_handler(ProblemException)
+async def problem_error(request: Request, exc: ProblemException):
+    metrics.record_error(exc.status, _route_template(request), exc.title)
+    return problem_response(exc.status, exc.title, exc.detail, exc.type)
+
+
 @app.exception_handler(StarletteHTTPException)
 async def lumen_style_http_error(request: Request, exc: StarletteHTTPException):
     metrics.record_error(exc.status_code, _route_template(request), str(exc.detail))
+    if is_new_api(request.url.path):
+        # New-generation APIs (MCG/EFC) speak RFC 7807 problem+json
+        return problem_response(exc.status_code, str(exc.detail))
     return JSONResponse(status_code=exc.status_code,
                         content={"code": exc.status_code, "message": str(exc.detail)})
 
@@ -61,6 +74,8 @@ async def lumen_style_validation_error(request: Request, exc: RequestValidationE
               for e in exc.errors()]
     summary = "; ".join(f"{e['field']}: {e['message']}" for e in errors)
     metrics.record_error(400, _route_template(request), f"validation — {summary}")
+    if is_new_api(request.url.path):
+        return problem_response(400, "Bad Request", summary)
     return JSONResponse(status_code=400,
                         content={"code": 400, "message": "Bad Request", "errors": errors})
 
@@ -84,6 +99,8 @@ async def root():
         "ethernetOnDemand": "/Network/v5/DynamicConnection",
         "internetOnDemand": ["/Product/v1/price", "/Product/v1/priceRequest",
                              "/Customer/v3/Ordering/orderRequest"],
+        "multiCloudGateway": "/mcgw/v1/gateways",
+        "ethernetFabricConnect": "/fabric/v1/connections",
         "lab": ["/_lab/state", "/_lab/events", "/_lab/reset"],
     }
 
@@ -91,6 +108,8 @@ async def root():
 app.include_router(auth_router)
 app.include_router(eod_router)
 app.include_router(iod_router)
+app.include_router(mcg_router)
+app.include_router(efc_router)
 app.include_router(lab_router)
 
 # The Lumen-style error envelope actually returned by the exception handlers
@@ -129,12 +148,22 @@ def _lumen_openapi():
         "description": "Bad Request",
         "content": {"application/json": {"schema": {"$ref": "#/components/schemas/APIError"}}},
     }
-    for path_item in schema["paths"].values():
+    problem_schema = {
+        "title": "LpdpProblem", "type": "object",
+        "properties": {"type": {"type": "string"}, "title": {"type": "string"},
+                       "status": {"type": "integer"}, "detail": {"type": "string"}},
+    }
+    schema["components"]["schemas"]["LpdpProblem"] = problem_schema
+    problem_400 = {"description": "Bad Request",
+                   "content": {"application/problem+json": {
+                       "schema": {"$ref": "#/components/schemas/LpdpProblem"}}}}
+    for path, path_item in schema["paths"].items():
+        new_api = path.startswith(("/mcgw/", "/fabric/"))
         for operation in path_item.values():
             responses = operation.get("responses", {})
             if "422" in responses:
                 del responses["422"]
-                responses["400"] = error_response
+                responses["400"] = problem_400 if new_api else error_response
     schema["components"]["schemas"].pop("HTTPValidationError", None)
     schema["components"]["schemas"].pop("ValidationError", None)
     app.openapi_schema = schema
