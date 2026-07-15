@@ -313,6 +313,10 @@ modifying a non-`active` connection → `409`, tier capacity exceeded → `422` 
 as `problem+json`. Seeded objects: gateway `4c85553e-…` (50 Gbps, PROVISIONED),
 interface `f0b9cf7b-…`, hosted-AWS connection `d2bdc87d-…` (1000 Mbps, active).
 
+Ready-made clients: `examples/mcg_efc_walkthrough.py` (full lifecycle: gateway →
+interface → connection → priced bandwidth change → guardrail demo → teardown) and
+`examples/efc_change_bandwidth.py` (the EFC counterpart of the EOD script).
+
 ## 5. Webhooks and events
 
 Async completions (bandwidth applied, circuit created/deleted, order completed)

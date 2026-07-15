@@ -87,7 +87,7 @@ Seed data reuses the identifiers from Lumen's own documentation examples, so req
 simulator/    the FastAPI app: auth, both API surfaces, webhook fan-out, /_lab controls
 middleware/   NetBox→NaaS reconciler (Phase 2: event-driven closed loop)
 scripts/      seed_netbox.py (idempotent NetBox model+data) · change_bandwidth.py (NetBox custom script, Phase 1)
-examples/     standalone clients for both flows + webhook receiver
+examples/     standalone clients for all four APIs + webhook receiver + seed profile
 tests/        end-to-end lifecycle tests (pytest, one command)
 docs/         full user manual
 ```
